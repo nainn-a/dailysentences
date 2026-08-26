@@ -58,6 +58,9 @@ export async function POST(request: Request) {
   const date = typeof body?.date === "string" ? body.date : "";
   const time = typeof body?.time === "string" ? body.time : "";
   const text = typeof body?.text === "string" ? body.text.trim() : "";
+  // Both come from a prior /api/images upload — see AddTodoSheet.
+  const imageId = typeof body?.imageId === "string" ? body.imageId : undefined;
+  const imageUrl = typeof body?.imageUrl === "string" ? body.imageUrl : undefined;
 
   if (!DATE_RE.test(date)) {
     return NextResponse.json({ error: "date 형식이 올바르지 않습니다." }, { status: 400 });
@@ -72,6 +75,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "내용은 200자 이내로 입력해주세요." }, { status: 400 });
   }
 
-  const todo = await create({ date, time, text });
+  const todo = await create({ date, time, text, imageId, imageUrl });
   return NextResponse.json({ todo }, { status: 201 });
 }

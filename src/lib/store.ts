@@ -3,6 +3,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { Redis } from "@upstash/redis";
 
+import { deleteImage } from "@/lib/image-store";
 import type { TodoDTO } from "@/lib/types";
 
 // Storage backend picks itself automatically:
@@ -86,7 +87,13 @@ export function countsBetween(start: string, end: string): Promise<Record<string
   });
 }
 
-export function create(input: { date: string; time: string; text: string }): Promise<TodoDTO> {
+export function create(input: {
+  date: string;
+  time: string;
+  text: string;
+  imageId?: string;
+  imageUrl?: string;
+}): Promise<TodoDTO> {
   return enqueue(async () => {
     const all = await readAll();
     const todo: TodoDTO = {
@@ -96,6 +103,9 @@ export function create(input: { date: string; time: string; text: string }): Pro
       text: input.text,
       done: false,
       createdAt: new Date().toISOString(),
+      ...(input.imageId && input.imageUrl
+        ? { imageId: input.imageId, imageUrl: input.imageUrl }
+        : {}),
     };
     all.push(todo);
     await writeAll(all);
@@ -120,9 +130,14 @@ export function update(
 export function remove(id: string): Promise<boolean> {
   return enqueue(async () => {
     const all = await readAll();
+    const todo = all.find((t) => t.id === id);
+    if (!todo) return false;
     const next = all.filter((t) => t.id !== id);
-    if (next.length === all.length) return false;
     await writeAll(next);
+    if (todo.imageId) {
+      // Best-effort — a stuck blob doesn't need to block the memo delete.
+      await deleteImage(todo.imageId).catch(() => {});
+    }
     return true;
   });
 }

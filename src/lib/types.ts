@@ -5,6 +5,8 @@ export type TodoDTO = {
   text: string;
   done: boolean;
   createdAt: string;
+  imageId?: string;
+  imageUrl?: string;
 };
 
 export type ImageDTO = {

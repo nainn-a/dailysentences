@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ImagePlus, X } from "lucide-react";
 
 import { formatNowTime } from "@/lib/date";
+import type { ImageDTO } from "@/lib/types";
 
 export default function AddTodoSheet({
   dateLabel,
@@ -11,11 +13,18 @@ export default function AddTodoSheet({
 }: {
   dateLabel: string;
   onClose: () => void;
-  onSubmit: (text: string, time: string) => void;
+  onSubmit: (text: string, time: string, image?: { id: string; url: string }) => void;
 }) {
   const [text, setText] = useState("");
   const [time, setTime] = useState(formatNowTime());
+  const [image, setImage] = useState<ImageDTO | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Submitting hands the uploaded image off to the memo — skip the
+  // clean-up-on-close for it once that happens.
+  const submittedRef = useRef(false);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -26,10 +35,62 @@ export default function AddTodoSheet({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  useEffect(() => {
+    if (!error) return;
+    const timer = window.setTimeout(() => setError(null), 2400);
+    return () => window.clearTimeout(timer);
+  }, [error]);
+
+  // Closing (Escape, backdrop tap, 취소) without submitting shouldn't leave
+  // an orphaned upload sitting in storage.
+  useEffect(() => {
+    return () => {
+      if (!submittedRef.current && image) {
+        fetch(`/api/images?id=${encodeURIComponent(image.id)}`, { method: "DELETE" }).catch(
+          () => {},
+        );
+      }
+    };
+  }, [image]);
+
+  async function handleFileChange(files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("이미지 파일만 첨부할 수 있어요.");
+      return;
+    }
+
+    setError(null);
+    setUploading(true);
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch("/api/images", { method: "POST", body: form });
+    if (res.ok) {
+      const data = await res.json();
+      setImage(data.image);
+    } else {
+      const data = await res.json().catch(() => null);
+      setError(data?.error ?? "이미지 업로드에 실패했어요.");
+    }
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  async function handleRemoveImage() {
+    if (!image) return;
+    const removed = image;
+    setImage(null);
+    await fetch(`/api/images?id=${encodeURIComponent(removed.id)}`, { method: "DELETE" }).catch(
+      () => {},
+    );
+  }
+
   function submit() {
     const trimmed = text.trim();
     if (!trimmed) return;
-    onSubmit(trimmed, time);
+    submittedRef.current = true;
+    onSubmit(trimmed, time, image ? { id: image.id, url: image.url } : undefined);
   }
 
   return (
@@ -72,6 +133,45 @@ export default function AddTodoSheet({
             />
           </div>
 
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => handleFileChange(e.target.files)}
+          />
+
+          {image ? (
+            <div className="relative w-fit">
+              {/* eslint-disable-next-line @next/next/no-img-element -- user-uploaded image from Blob/local API, not a static build asset */}
+              <img
+                src={image.url}
+                alt=""
+                className="h-20 w-20 rounded-xl border border-(--color-border) object-cover"
+              />
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                aria-label="사진 제거"
+                className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="flex w-fit items-center gap-1.5 rounded-lg border border-dashed border-(--color-border) px-3 py-1.5 text-xs font-medium text-(--color-muted) transition hover:border-(--color-accent) hover:text-(--color-accent-dark) disabled:opacity-50"
+            >
+              <ImagePlus className="h-3.5 w-3.5" />
+              {uploading ? "업로드 중…" : "사진 추가"}
+            </button>
+          )}
+
+          {error && <p className="text-xs text-red-500">{error}</p>}
+
           <div className="mt-2 flex gap-2">
             <button
               type="button"
@@ -82,7 +182,7 @@ export default function AddTodoSheet({
             </button>
             <button
               type="submit"
-              disabled={!text.trim()}
+              disabled={!text.trim() || uploading}
               style={{ backgroundImage: "var(--gradient-accent)" }}
               className="flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold text-(--color-accent-ink) transition hover:brightness-105 disabled:opacity-40"
             >

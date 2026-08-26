@@ -58,11 +58,21 @@ export default function CalendarApp() {
     loadWeekCounts(weekStart);
   }, [weekStart, loadWeekCounts]);
 
-  async function handleAdd(text: string, time: string) {
+  async function handleAdd(
+    text: string,
+    time: string,
+    image?: { id: string; url: string },
+  ) {
     const res = await fetch("/api/todos", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: selectedKey, time, text }),
+      body: JSON.stringify({
+        date: selectedKey,
+        time,
+        text,
+        imageId: image?.id,
+        imageUrl: image?.url,
+      }),
     });
     if (res.ok) {
       const data = await res.json();
