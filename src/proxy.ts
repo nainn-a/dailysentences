@@ -4,8 +4,10 @@ import type { NextRequest } from "next/server";
 import { AUTH_COOKIE_NAME, isValidAuthCookieValue } from "@/lib/auth-cookie";
 
 // Reachable without a valid session — the password-check endpoint itself
-// must be, or nobody could ever log in.
-const PUBLIC_PATHS = new Set(["/login", "/api/login"]);
+// must be, or nobody could ever log in. /api/widget is also here: it does
+// its own WIDGET_TOKEN check (see that route), since a Shortcut can't carry
+// the login cookie around.
+const PUBLIC_PATHS = new Set(["/login", "/api/login", "/api/widget"]);
 
 export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;

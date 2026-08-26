@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ImagePlus, X } from "lucide-react";
 
+import { CATEGORY_COLORS } from "@/lib/categories";
 import { formatNowTime } from "@/lib/date";
 import type { ImageDTO } from "@/lib/types";
 
@@ -13,13 +14,20 @@ export default function AddTodoSheet({
 }: {
   dateLabel: string;
   onClose: () => void;
-  onSubmit: (text: string, time: string, image?: { id: string; url: string }) => void;
+  onSubmit: (
+    text: string,
+    time: string,
+    image?: { id: string; url: string },
+    category?: { color: string; label?: string },
+  ) => void;
 }) {
   const [text, setText] = useState("");
   const [time, setTime] = useState(formatNowTime());
   const [image, setImage] = useState<ImageDTO | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [categoryColor, setCategoryColor] = useState<string | null>(null);
+  const [categoryLabel, setCategoryLabel] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Submitting hands the uploaded image off to the memo — skip the
@@ -98,7 +106,12 @@ export default function AddTodoSheet({
     const trimmed = text.trim();
     if (!trimmed) return;
     submittedRef.current = true;
-    onSubmit(trimmed, time, image ? { id: image.id, url: image.url } : undefined);
+    onSubmit(
+      trimmed,
+      time,
+      image ? { id: image.id, url: image.url } : undefined,
+      categoryColor ? { color: categoryColor, label: categoryLabel.trim() || undefined } : undefined,
+    );
   }
 
   return (
@@ -140,6 +153,31 @@ export default function AddTodoSheet({
               onChange={(e) => setTime(e.target.value)}
               className="rounded-lg border border-(--color-border) bg-white px-3 py-1.5 text-sm text-(--color-ink) outline-none focus:border-(--color-accent)"
             />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {CATEGORY_COLORS.map((c) => (
+              <button
+                key={c.value}
+                type="button"
+                aria-label={c.label}
+                onClick={() => setCategoryColor((cur) => (cur === c.value ? null : c.value))}
+                className={[
+                  "h-6 w-6 shrink-0 rounded-full transition",
+                  categoryColor === c.value ? "ring-2 ring-(--color-accent) ring-offset-2" : "",
+                ].join(" ")}
+                style={{ backgroundColor: c.value }}
+              />
+            ))}
+            {categoryColor && (
+              <input
+                value={categoryLabel}
+                onChange={(e) => setCategoryLabel(e.target.value)}
+                maxLength={20}
+                placeholder="카테고리 이름(선택)"
+                className="min-w-0 flex-1 rounded-lg border border-(--color-border) bg-white px-3 py-1.5 text-xs text-(--color-ink) outline-none focus:border-(--color-accent)"
+              />
+            )}
           </div>
 
           <input

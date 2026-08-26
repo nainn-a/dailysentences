@@ -8,6 +8,8 @@ export type TodoDTO = {
   imageId?: string;
   imageUrl?: string;
   parentId?: string;
+  categoryColor?: string;
+  categoryLabel?: string;
 };
 
 export type ImageDTO = {

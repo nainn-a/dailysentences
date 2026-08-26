@@ -94,6 +94,8 @@ export function create(input: {
   imageId?: string;
   imageUrl?: string;
   parentId?: string;
+  categoryColor?: string;
+  categoryLabel?: string;
 }): Promise<TodoDTO> {
   return enqueue(async () => {
     const all = await readAll();
@@ -108,6 +110,8 @@ export function create(input: {
         ? { imageId: input.imageId, imageUrl: input.imageUrl }
         : {}),
       ...(input.parentId ? { parentId: input.parentId } : {}),
+      ...(input.categoryColor ? { categoryColor: input.categoryColor } : {}),
+      ...(input.categoryLabel ? { categoryLabel: input.categoryLabel } : {}),
     };
     all.push(todo);
     await writeAll(all);
@@ -128,15 +132,35 @@ export function findTopLevel(date: string, id: string): Promise<TodoDTO | null> 
 
 export function update(
   id: string,
-  patch: { done?: boolean; text?: string },
+  patch: {
+    done?: boolean;
+    text?: string;
+    // `null` clears the category (as opposed to `undefined`, which leaves
+    // it untouched — same convention PATCH /api/todos/:id uses in its body).
+    categoryColor?: string | null;
+    categoryLabel?: string | null;
+  },
 ): Promise<TodoDTO | null> {
   return enqueue(async () => {
     const all = await readAll();
     const idx = all.findIndex((t) => t.id === id);
     if (idx === -1) return null;
-    all[idx] = { ...all[idx], ...patch };
+
+    const next: TodoDTO = { ...all[idx] };
+    if (patch.done !== undefined) next.done = patch.done;
+    if (patch.text !== undefined) next.text = patch.text;
+    if (patch.categoryColor !== undefined) {
+      if (patch.categoryColor === null) delete next.categoryColor;
+      else next.categoryColor = patch.categoryColor;
+    }
+    if (patch.categoryLabel !== undefined) {
+      if (patch.categoryLabel === null) delete next.categoryLabel;
+      else next.categoryLabel = patch.categoryLabel;
+    }
+
+    all[idx] = next;
     await writeAll(all);
-    return all[idx];
+    return next;
   });
 }
 

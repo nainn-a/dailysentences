@@ -6,7 +6,9 @@
 - 선택한 날짜에 시간이 찍힌 메모/할 일 카드를 추가·완료 표시·삭제
 - 메모가 있는 날짜는 점(●)으로 표시
 - **이미지** 탭에서 사진을 업로드하고 그리드로 모아보기(클릭하면 크게 보기 + 삭제)
-- 비밀번호 없이는 어떤 화면·API도 볼 수 없음(미들웨어에서 매 요청마다 검사)
+- 메모에 6가지 색상 중 하나로 **카테고리** 태그를 붙일 수 있음(추가·수정 시 색상 원 클릭)
+- 아이폰 **단축어(Shortcuts)** 위젯으로 오늘의 메모를 홈 화면에 띄우기 (아래 "단축어 위젯" 참고)
+- 비밀번호 없이는 어떤 화면·API도 볼 수 없음(미들웨어에서 매 요청마다 검사, 단축어 위젯 API는 예외로 별도 토큰 사용)
 
 ## 기본 비밀번호
 
@@ -43,6 +45,43 @@ npm run dev
 
 비밀번호를 바꾸고 싶으면 프로젝트 환경변수에 `APP_PASSWORD`만 추가하면 됩니다(선택, 안 해도 `0000`으로 동작).
 
+## 아이폰 단축어(Shortcuts) 위젯
+
+로그인 쿠키 없이도 오늘의 메모만 읽을 수 있는 별도 API(`/api/widget`)를 통해, 홈 화면 위젯으로 오늘의 메모를 띄울 수 있습니다.
+
+**1. 위젯 토큰 설정**
+
+Vercel 프로젝트 → **Settings → Environment Variables** → `WIDGET_TOKEN` 추가 (랜덤 문자열, 예: `openssl rand -hex 16` 결과) → **Redeploy**. 설정 전에는 이 API가 501로 막혀 있습니다.
+
+**2. 아이폰 "단축어" 앱에서 새 단축어 만들기**
+
+아래 순서로 액션을 추가하세요.
+
+1. **현재 날짜**
+2. **날짜 서식 지정** — 형식: "사용자 지정", `yyyy-MM-dd`
+3. **텍스트** — 아래 내용을 입력하고, 맨 끝에 2번 결과(서식 지정된 날짜)를 붙여넣기
+   ```
+   https://dailysentences.vercel.app/api/widget?token=여기에_WIDGET_TOKEN&date=
+   ```
+4. **URL의 콘텐츠 가져오기** — URL: 3번의 텍스트 결과
+
+이렇게 만든 단축어를 실행하면 오늘 메모가 다음과 같은 텍스트로 반환됩니다.
+
+```
+8월 26일 (수)
+
+🔴 09:15 알뜰폰 투폰 가능한지
+· 10:36 오오된다
+```
+
+**3. 홈 화면 위젯으로 추가**
+
+홈 화면 빈 곳 길게 누르기 → **+** → **단축어** 검색 → 위젯 크기 선택 → 방금 만든 단축어 지정.
+
+> iOS 위젯은 시스템이 정한 주기(보통 수십 분 간격)로만 자동 새로고침됩니다 — 앱에서 더 자주 갱신하도록 강제할 수 없는 iOS 자체 제약입니다. 위젯을 탭하면 즉시 최신 내용으로 실행됩니다.
+
+`/api/widget?token=...&format=json`으로 요청하면 `{ date, items: [{ time, text, done, categoryColor, categoryLabel }] }` 형태의 JSON도 받을 수 있어, 더 꾸민 위젯을 만들고 싶다면 이 형식을 활용하세요.
+
 ### 그 외 호스트 (Render, 개인 서버 등)
 
 Node.js가 상시 실행되는 곳(서버리스가 아닌 VM/컨테이너)이라면 Redis 없이 로컬 파일 저장만으로도 재배포와 무관하게 데이터가 유지됩니다.
@@ -74,12 +113,14 @@ src/
     api/logout/           # 로그인 쿠키 삭제
     api/todos/              # 메모 CRUD API
     api/images/              # 이미지 업로드/목록/삭제 API
+    api/widget/               # 단축어 위젯용 토큰 인증 조회 API
   components/            # AppShell, CalendarApp, ImageGallery, WeekStrip, TodoItem, AddTodoSheet, NavRail 등
   lib/
     auth-cookie.ts          # 비밀번호 확인 + 쿠키 서명/검증
     store.ts                 # 메모 저장 (Redis 연결돼 있으면 Redis, 아니면 data/todos.json)
     image-store.ts             # 이미지 저장 (Blob 연결돼 있으면 Blob, 아니면 data/images/)
-    date.ts                      # 날짜 유틸리티
+    categories.ts                # 카테고리 색상 팔레트
+    date.ts                        # 날짜 유틸리티
   proxy.ts                      # 모든 요청에서 로그인 쿠키를 검사하는 미들웨어
 data/todos.json                  # 실제 메모 데이터 (git에는 포함되지 않음, 실행 시 자동 생성)
 data/images/                     # 실제 이미지 파일 (git에는 포함되지 않음, 실행 시 자동 생성)

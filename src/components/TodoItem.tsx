@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, CornerDownRight, Pencil, X } from "lucide-react";
 
+import { CATEGORY_COLORS } from "@/lib/categories";
 import type { TodoDTO } from "@/lib/types";
 
 const LONG_PRESS_MS = 500;
@@ -18,7 +19,7 @@ export default function TodoItem({
   todo: TodoDTO;
   replies?: TodoDTO[];
   onDelete: (id: string) => void;
-  onEdit?: (id: string, text: string) => void;
+  onEdit?: (id: string, text: string, category: { color: string | null; label?: string }) => void;
   onReply?: (parentId: string, text: string) => Promise<boolean>;
   isReply?: boolean;
 }) {
@@ -29,6 +30,10 @@ export default function TodoItem({
   const [sending, setSending] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(todo.text);
+  const [editCategoryColor, setEditCategoryColor] = useState<string | null>(
+    todo.categoryColor ?? null,
+  );
+  const [editCategoryLabel, setEditCategoryLabel] = useState(todo.categoryLabel ?? "");
   const pressTimerRef = useRef<number | null>(null);
   const longPressFiredRef = useRef(false);
 
@@ -52,13 +57,18 @@ export default function TodoItem({
 
   function startEdit() {
     setEditText(todo.text);
+    setEditCategoryColor(todo.categoryColor ?? null);
+    setEditCategoryLabel(todo.categoryLabel ?? "");
     setEditing(true);
   }
 
   function submitEdit() {
     const trimmed = editText.trim();
-    if (trimmed && trimmed !== todo.text) {
-      onEdit?.(todo.id, trimmed);
+    if (trimmed) {
+      onEdit?.(todo.id, trimmed, {
+        color: editCategoryColor,
+        label: editCategoryLabel.trim() || undefined,
+      });
     }
     setEditing(false);
   }
@@ -122,35 +132,66 @@ export default function TodoItem({
                 e.preventDefault();
                 submitEdit();
               }}
-              className="flex min-w-0 flex-1 items-center gap-2"
+              className="flex min-w-0 flex-1 flex-col gap-2"
             >
-              <input
-                autoFocus
-                aria-label="메모 수정"
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") setEditing(false);
-                }}
-                maxLength={200}
-                className="min-w-0 flex-1 bg-transparent text-[15px] text-(--color-ink) outline-none"
-              />
-              <button
-                type="submit"
-                disabled={!editText.trim()}
-                aria-label="저장"
-                className="shrink-0 text-(--color-accent-dark) disabled:opacity-40"
-              >
-                <Check className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditing(false)}
-                aria-label="수정 취소"
-                className="shrink-0 text-(--color-muted)"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <input
+                  autoFocus
+                  aria-label="메모 수정"
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") setEditing(false);
+                  }}
+                  maxLength={200}
+                  className="min-w-0 flex-1 bg-transparent text-[15px] text-(--color-ink) outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={!editText.trim()}
+                  aria-label="저장"
+                  className="shrink-0 text-(--color-accent-dark) disabled:opacity-40"
+                >
+                  <Check className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditing(false)}
+                  aria-label="수정 취소"
+                  className="shrink-0 text-(--color-muted)"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                {CATEGORY_COLORS.map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    aria-label={c.label}
+                    onClick={() =>
+                      setEditCategoryColor((cur) => (cur === c.value ? null : c.value))
+                    }
+                    className={[
+                      "h-5 w-5 shrink-0 rounded-full transition",
+                      editCategoryColor === c.value
+                        ? "ring-2 ring-(--color-accent) ring-offset-1"
+                        : "",
+                    ].join(" ")}
+                    style={{ backgroundColor: c.value }}
+                  />
+                ))}
+                {editCategoryColor && (
+                  <input
+                    value={editCategoryLabel}
+                    onChange={(e) => setEditCategoryLabel(e.target.value)}
+                    maxLength={20}
+                    placeholder="카테고리 이름"
+                    className="min-w-0 flex-1 rounded border border-(--color-border) bg-transparent px-2 py-1 text-xs text-(--color-ink) outline-none"
+                  />
+                )}
+              </div>
             </form>
           ) : (
             <button
@@ -162,9 +203,21 @@ export default function TodoItem({
               onPointerCancel={handlePressEnd}
               onContextMenu={(e) => e.preventDefault()}
               style={{ WebkitTouchCallout: "none" }}
-              className="min-w-0 flex-1 select-none text-left text-[15px] leading-snug text-(--color-ink)"
+              className="flex min-w-0 flex-1 select-none items-center gap-2 text-left text-[15px] leading-snug text-(--color-ink)"
             >
-              {todo.text}
+              {todo.categoryColor && (
+                <span
+                  aria-hidden
+                  className="h-2.5 w-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: todo.categoryColor }}
+                />
+              )}
+              <span className="min-w-0 flex-1">{todo.text}</span>
+              {todo.categoryLabel && (
+                <span className="shrink-0 rounded-full bg-black/5 px-2 py-0.5 text-[11px] text-(--color-muted)">
+                  {todo.categoryLabel}
+                </span>
+              )}
             </button>
           )}
         </div>

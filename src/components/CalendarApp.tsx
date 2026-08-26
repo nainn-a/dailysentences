@@ -63,6 +63,7 @@ export default function CalendarApp() {
     text: string,
     time: string,
     image?: { id: string; url: string },
+    category?: { color: string; label?: string },
   ) {
     const res = await fetch("/api/todos", {
       method: "POST",
@@ -73,6 +74,8 @@ export default function CalendarApp() {
         text,
         imageId: image?.id,
         imageUrl: image?.url,
+        categoryColor: category?.color,
+        categoryLabel: category?.label,
       }),
     });
     if (res.ok) {
@@ -83,12 +86,33 @@ export default function CalendarApp() {
     }
   }
 
-  async function handleEdit(id: string, text: string) {
-    setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, text } : t)));
+  async function handleEdit(
+    id: string,
+    text: string,
+    category: { color: string | null; label?: string },
+  ) {
+    setTodos((prev) =>
+      prev.map((t) => {
+        if (t.id !== id) return t;
+        const updated: TodoDTO = { ...t, text };
+        if (category.color) {
+          updated.categoryColor = category.color;
+          updated.categoryLabel = category.label;
+        } else {
+          delete updated.categoryColor;
+          delete updated.categoryLabel;
+        }
+        return updated;
+      }),
+    );
     await fetch(`/api/todos/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({
+        text,
+        categoryColor: category.color ?? null,
+        categoryLabel: category.color ? (category.label ?? null) : null,
+      }),
     });
   }
 

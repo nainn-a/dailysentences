@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { AUTH_COOKIE_NAME, isValidAuthCookieValue } from "@/lib/auth-cookie";
+import { isKnownCategoryColor } from "@/lib/categories";
 import { remove, update } from "@/lib/store";
 
 async function requireAuth() {
@@ -10,7 +11,10 @@ async function requireAuth() {
   return ok;
 }
 
-// PATCH /api/todos/:id { done?, text? } -> toggle completion or edit text.
+// PATCH /api/todos/:id { done?, text?, categoryColor?, categoryLabel? }
+// -> toggle completion, edit text, and/or change the category tag.
+// categoryColor/categoryLabel: omit to leave untouched, string to set,
+// null to clear.
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -21,7 +25,12 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await request.json().catch(() => null);
-  const patch: { done?: boolean; text?: string } = {};
+  const patch: {
+    done?: boolean;
+    text?: string;
+    categoryColor?: string | null;
+    categoryLabel?: string | null;
+  } = {};
 
   if (typeof body?.done === "boolean") patch.done = body.done;
   if (typeof body?.text === "string") {
@@ -30,6 +39,23 @@ export async function PATCH(
       return NextResponse.json({ error: "내용을 입력해주세요." }, { status: 400 });
     }
     patch.text = text;
+  }
+  if (body && "categoryColor" in body) {
+    if (body.categoryColor === null) {
+      patch.categoryColor = null;
+    } else if (typeof body.categoryColor === "string") {
+      if (!isKnownCategoryColor(body.categoryColor)) {
+        return NextResponse.json(
+          { error: "지원하지 않는 카테고리 색상입니다." },
+          { status: 400 },
+        );
+      }
+      patch.categoryColor = body.categoryColor;
+    }
+  }
+  if (body && "categoryLabel" in body) {
+    patch.categoryLabel =
+      body.categoryLabel === null ? null : String(body.categoryLabel).trim().slice(0, 20);
   }
 
   const todo = await update(id, patch);
