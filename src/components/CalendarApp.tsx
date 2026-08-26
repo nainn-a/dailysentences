@@ -92,6 +92,15 @@ export default function CalendarApp() {
     });
   }
 
+  async function handleEdit(id: string, text: string) {
+    setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, text } : t)));
+    await fetch(`/api/todos/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+  }
+
   async function handleDelete(id: string) {
     // Deleting a memo takes its replies down with it — mirror that locally
     // so the count and list stay in sync with the server-side cascade.
@@ -184,6 +193,7 @@ export default function CalendarApp() {
                 replies={repliesByParent[todo.id] ?? []}
                 onToggle={handleToggle}
                 onDelete={handleDelete}
+                onEdit={handleEdit}
                 onReply={handleReply}
               />
             ))}

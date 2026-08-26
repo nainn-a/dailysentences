@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CornerDownRight, X } from "lucide-react";
+import { Check, CornerDownRight, Pencil, X } from "lucide-react";
 
 import type { TodoDTO } from "@/lib/types";
 
@@ -10,6 +10,7 @@ export default function TodoItem({
   replies = [],
   onToggle,
   onDelete,
+  onEdit,
   onReply,
   isReply = false,
 }: {
@@ -17,6 +18,7 @@ export default function TodoItem({
   replies?: TodoDTO[];
   onToggle: (id: string, done: boolean) => void;
   onDelete: (id: string) => void;
+  onEdit?: (id: string, text: string) => void;
   onReply?: (parentId: string, text: string) => Promise<boolean>;
   isReply?: boolean;
 }) {
@@ -25,6 +27,8 @@ export default function TodoItem({
   const [replying, setReplying] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(todo.text);
 
   async function submitReply() {
     const trimmed = replyText.trim();
@@ -36,6 +40,19 @@ export default function TodoItem({
       setReplyText("");
       setReplying(false);
     }
+  }
+
+  function startEdit() {
+    setEditText(todo.text);
+    setEditing(true);
+  }
+
+  function submitEdit() {
+    const trimmed = editText.trim();
+    if (trimmed && trimmed !== todo.text) {
+      onEdit?.(todo.id, trimmed);
+    }
+    setEditing(false);
   }
 
   return (
@@ -58,19 +75,68 @@ export default function TodoItem({
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={() => onToggle(todo.id, !todo.done)}
-            className={[
-              "min-w-0 flex-1 text-left text-[15px] leading-snug",
-              todo.done ? "text-(--color-muted) line-through" : "text-(--color-ink)",
-            ].join(" ")}
-          >
-            {todo.text}
-          </button>
+          {editing ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                submitEdit();
+              }}
+              className="flex min-w-0 flex-1 items-center gap-2"
+            >
+              <input
+                autoFocus
+                aria-label="메모 수정"
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setEditing(false);
+                }}
+                maxLength={200}
+                className="min-w-0 flex-1 bg-transparent text-[15px] text-(--color-ink) outline-none"
+              />
+              <button
+                type="submit"
+                disabled={!editText.trim()}
+                aria-label="저장"
+                className="shrink-0 text-(--color-accent-dark) disabled:opacity-40"
+              >
+                <Check className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditing(false)}
+                aria-label="수정 취소"
+                className="shrink-0 text-(--color-muted)"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onToggle(todo.id, !todo.done)}
+              className={[
+                "min-w-0 flex-1 text-left text-[15px] leading-snug",
+                todo.done ? "text-(--color-muted) line-through" : "text-(--color-ink)",
+              ].join(" ")}
+            >
+              {todo.text}
+            </button>
+          )}
         </div>
 
-        {!isReply && onReply && (
+        {!editing && onEdit && (
+          <button
+            type="button"
+            aria-label="수정"
+            onClick={startEdit}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-(--color-muted) opacity-0 transition hover:bg-black/5 group-hover:opacity-100 focus-visible:opacity-100"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+        )}
+
+        {!isReply && !editing && onReply && (
           <button
             type="button"
             aria-label="답장"
@@ -134,7 +200,14 @@ export default function TodoItem({
       {replies.length > 0 && (
         <div className="ml-11 flex flex-col gap-2 border-l-2 border-(--color-border) pl-3">
           {replies.map((reply) => (
-            <TodoItem key={reply.id} todo={reply} onToggle={onToggle} onDelete={onDelete} isReply />
+            <TodoItem
+              key={reply.id}
+              todo={reply}
+              onToggle={onToggle}
+              onDelete={onDelete}
+              onEdit={onEdit}
+              isReply
+            />
           ))}
         </div>
       )}
