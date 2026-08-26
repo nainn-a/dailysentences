@@ -14,7 +14,6 @@ import type { TodoDTO } from "@/lib/types";
 import WeekStrip from "@/components/WeekStrip";
 import TodoItem from "@/components/TodoItem";
 import AddTodoSheet from "@/components/AddTodoSheet";
-import { BottomNav, SideRail, type NavKey } from "@/components/NavRail";
 
 export default function CalendarApp() {
   const router = useRouter();
@@ -23,8 +22,6 @@ export default function CalendarApp() {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
-  const [nav, setNav] = useState<NavKey>("calendar");
-  const [notice, setNotice] = useState<string | null>(null);
 
   const weekStart = useMemo(() => startOfWeek(selected), [selected]);
   const selectedKey = toDateKey(selected);
@@ -99,90 +96,69 @@ export default function CalendarApp() {
     router.refresh();
   }
 
-  function handleNavSelect(key: NavKey) {
-    setNav(key);
-    if (key !== "calendar") {
-      setNotice("준비 중인 기능이에요");
-      window.setTimeout(() => setNotice(null), 1600);
-      setNav("calendar");
-    }
-  }
-
   return (
-    <div className="flex h-dvh min-h-dvh">
-      <SideRail active={nav} onSelect={handleNavSelect} />
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Header */}
-        <header className="glass flex items-center justify-between border-b border-(--color-border) bg-(--color-surface) px-4 py-4 sm:px-6">
-          <h1 className="text-xl font-semibold text-(--color-ink)">{headerDate}</h1>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleLogout}
-              aria-label="로그아웃"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-(--color-muted) transition hover:bg-black/5"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-        </header>
-
-        {/* Week strip */}
-        <div className="glass border-b border-(--color-border) bg-(--color-surface)">
-          <WeekStrip
-            weekStart={weekStart}
-            selected={selected}
-            counts={counts}
-            onSelect={setSelected}
-          />
-        </div>
-
-        {/* Todo list */}
-        <main className="relative flex-1 overflow-y-auto px-4 py-5 sm:px-6">
-          {loading ? (
-            <p className="mt-10 text-center text-sm text-(--color-muted)">불러오는 중…</p>
-          ) : todos.length === 0 ? (
-            <div className="mt-16 flex flex-col items-center gap-2 text-center">
-              <p className="text-sm text-(--color-muted)">
-                이 날짜에 남긴 메모가 아직 없어요.
-              </p>
-              <p className="text-xs text-(--color-muted)">
-                오른쪽 아래 + 버튼으로 새 메모를 추가해보세요.
-              </p>
-            </div>
-          ) : (
-            <div className="mx-auto flex max-w-2xl flex-col gap-3">
-              {todos.map((todo) => (
-                <TodoItem
-                  key={todo.id}
-                  todo={todo}
-                  onToggle={handleToggle}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </div>
-          )}
-
+    <>
+      {/* Header */}
+      <header className="glass flex items-center justify-between border-b border-(--color-border) bg-(--color-surface) px-4 py-4 sm:px-6">
+        <h1 className="text-xl font-semibold text-(--color-ink)">{headerDate}</h1>
+        <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => setShowAdd(true)}
-            aria-label="새 메모 추가"
-            style={{ backgroundImage: "var(--gradient-accent)" }}
-            className="fixed bottom-24 right-5 flex h-14 w-14 items-center justify-center rounded-full text-(--color-accent-ink) shadow-lg transition hover:brightness-105 active:scale-95 md:bottom-8 md:right-8"
+            onClick={handleLogout}
+            aria-label="로그아웃"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-(--color-muted) transition hover:bg-black/5"
           >
-            <Plus className="h-6 w-6" />
+            <LogOut className="h-4 w-4" />
           </button>
+        </div>
+      </header>
 
-          {notice && (
-            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 rounded-full bg-black/80 px-4 py-2 text-xs text-white md:bottom-8">
-              {notice}
-            </div>
-          )}
-        </main>
-
-        <BottomNav active={nav} onSelect={handleNavSelect} />
+      {/* Week strip */}
+      <div className="glass border-b border-(--color-border) bg-(--color-surface)">
+        <WeekStrip
+          weekStart={weekStart}
+          selected={selected}
+          counts={counts}
+          onSelect={setSelected}
+        />
       </div>
+
+      {/* Todo list */}
+      <main className="relative flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+        {loading ? (
+          <p className="mt-10 text-center text-sm text-(--color-muted)">불러오는 중…</p>
+        ) : todos.length === 0 ? (
+          <div className="mt-16 flex flex-col items-center gap-2 text-center">
+            <p className="text-sm text-(--color-muted)">
+              이 날짜에 남긴 메모가 아직 없어요.
+            </p>
+            <p className="text-xs text-(--color-muted)">
+              오른쪽 아래 + 버튼으로 새 메모를 추가해보세요.
+            </p>
+          </div>
+        ) : (
+          <div className="mx-auto flex max-w-2xl flex-col gap-3">
+            {todos.map((todo) => (
+              <TodoItem
+                key={todo.id}
+                todo={todo}
+                onToggle={handleToggle}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setShowAdd(true)}
+          aria-label="새 메모 추가"
+          style={{ backgroundImage: "var(--gradient-accent)" }}
+          className="fixed bottom-24 right-5 flex h-14 w-14 items-center justify-center rounded-full text-(--color-accent-ink) shadow-lg transition hover:brightness-105 active:scale-95 md:bottom-8 md:right-8"
+        >
+          <Plus className="h-6 w-6" />
+        </button>
+      </main>
 
       {showAdd && (
         <AddTodoSheet
@@ -191,6 +167,6 @@ export default function CalendarApp() {
           onSubmit={handleAdd}
         />
       )}
-    </div>
+    </>
   );
 }

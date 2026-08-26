@@ -1,13 +1,10 @@
 "use client";
 
-import { CalendarDays, Hash, Image as ImageIcon, Search, Settings } from "lucide-react";
+import { CalendarDays, Image as ImageIcon } from "lucide-react";
 
 export const NAV_ITEMS = [
   { key: "calendar", label: "캘린더", icon: CalendarDays },
-  { key: "tag", label: "태그", icon: Hash },
   { key: "image", label: "이미지", icon: ImageIcon },
-  { key: "search", label: "검색", icon: Search },
-  { key: "settings", label: "설정", icon: Settings },
 ] as const;
 
 export type NavKey = (typeof NAV_ITEMS)[number]["key"];

@@ -6,3 +6,9 @@ export type TodoDTO = {
   done: boolean;
   createdAt: string;
 };
+
+export type ImageDTO = {
+  id: string;
+  url: string;
+  uploadedAt: string;
+};

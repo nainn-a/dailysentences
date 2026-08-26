@@ -1,12 +1,12 @@
 import AppShell from "@/components/AppShell";
-import CalendarApp from "@/components/CalendarApp";
+import ImageGallery from "@/components/ImageGallery";
 
-export default function CalendarPage() {
+export default function ImagePage() {
   // Reaching this page at all means the proxy already validated the
   // password cookie — no per-user account system to look up here.
   return (
     <AppShell>
-      <CalendarApp />
+      <ImageGallery />
     </AppShell>
   );
 }

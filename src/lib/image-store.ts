@@ -1,0 +1,83 @@
+import { mkdir, readdir, stat, unlink, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { randomUUID } from "node:crypto";
+import { del, list, put } from "@vercel/blob";
+
+import type { ImageDTO } from "@/lib/types";
+
+// Storage backend picks itself automatically, same pattern as store.ts:
+//  - Vercel Blob when BLOB_READ_WRITE_TOKEN is present — this is what you
+//    get for free by adding the "Blob" storage integration in the Vercel
+//    dashboard (Storage tab → Create Database). Needed for persistence on
+//    Vercel, since serverless functions don't have a durable local disk.
+//  - Local files under data/images/ otherwise — zero setup for local dev,
+//    or for any always-on host where the local disk does persist. Served
+//    back out through /api/images/file/[filename].
+
+const BLOB_PREFIX = "dailysentences-images/";
+const DATA_DIR = path.join(process.cwd(), "data", "images");
+
+export const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // stays under Vercel's serverless request-body cap
+
+function hasBlob(): boolean {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+}
+
+function extensionFor(file: File): string {
+  const fromType = file.type.split("/")[1];
+  const fromName = file.name.includes(".") ? file.name.split(".").pop() : undefined;
+  const ext = (fromType || fromName || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+  return ext || "bin";
+}
+
+export async function listImages(): Promise<ImageDTO[]> {
+  if (hasBlob()) {
+    const { blobs } = await list({ prefix: BLOB_PREFIX });
+    return blobs
+      .map((b) => ({ id: b.pathname, url: b.url, uploadedAt: b.uploadedAt.toISOString() }))
+      .sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt));
+  }
+
+  await mkdir(DATA_DIR, { recursive: true });
+  const files = await readdir(DATA_DIR).catch(() => []);
+  const withStats = await Promise.all(
+    files.map(async (name) => {
+      const info = await stat(path.join(DATA_DIR, name));
+      return {
+        id: name,
+        url: `/api/images/file/${encodeURIComponent(name)}`,
+        uploadedAt: info.mtime.toISOString(),
+      };
+    }),
+  );
+  return withStats.sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt));
+}
+
+export async function saveImage(file: File): Promise<ImageDTO> {
+  const filename = `${randomUUID()}.${extensionFor(file)}`;
+
+  if (hasBlob()) {
+    const blob = await put(`${BLOB_PREFIX}${filename}`, file, {
+      access: "public",
+      contentType: file.type || undefined,
+    });
+    return { id: blob.pathname, url: blob.url, uploadedAt: new Date().toISOString() };
+  }
+
+  await mkdir(DATA_DIR, { recursive: true });
+  const buffer = Buffer.from(await file.arrayBuffer());
+  await writeFile(path.join(DATA_DIR, filename), buffer);
+  return {
+    id: filename,
+    url: `/api/images/file/${encodeURIComponent(filename)}`,
+    uploadedAt: new Date().toISOString(),
+  };
+}
+
+export async function deleteImage(id: string): Promise<void> {
+  if (hasBlob()) {
+    await del(id);
+    return;
+  }
+  await unlink(path.join(DATA_DIR, id)).catch(() => {});
+}

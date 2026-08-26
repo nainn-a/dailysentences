@@ -6,6 +6,9 @@
      warm peach glow. */
   --color-app-bg: #f1e4ef;
   --color-surface: rgb(255 255 255 / 62%);
+  /* Higher-opacity surface for content that needs to read clearly over the
+     gradient — the memo-add popup, primarily. */
+  --color-surface-strong: rgb(255 255 255 / 92%);
   --color-ink: #2c2140;
   --color-muted: #8d7fa3;
   --color-border: rgb(255 255 255 / 55%);

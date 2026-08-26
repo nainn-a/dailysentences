@@ -41,7 +41,7 @@ export default function AddTodoSheet({
         className="absolute inset-0"
       />
 
-      <div className="glass relative w-full max-w-md rounded-t-3xl bg-(--color-surface) p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] shadow-xl sm:rounded-3xl sm:pb-5">
+      <div className="glass relative w-full max-w-md rounded-t-3xl bg-(--color-surface-strong) p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] shadow-xl sm:rounded-3xl sm:pb-5">
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-(--color-border) sm:hidden" />
 
         <h2 className="text-sm font-medium text-(--color-muted)">{dateLabel}</h2>
