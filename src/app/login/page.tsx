@@ -1,0 +1,87 @@
+"use client";
+
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { KeyRound } from "lucide-react";
+
+function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? "비밀번호가 올바르지 않습니다.");
+        setLoading(false);
+        return;
+      }
+      const callbackUrl = searchParams.get("callbackUrl") || "/calendar";
+      router.replace(callbackUrl);
+      router.refresh();
+    } catch {
+      setError("로그인 중 문제가 발생했어요. 다시 시도해주세요.");
+      setLoading(false);
+    }
+  }
+
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center gap-10 bg-(--color-app-bg) px-6 py-16">
+      <div className="flex flex-col items-center gap-3 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-(--color-accent) text-3xl font-semibold text-(--color-accent-ink) shadow-sm">
+          날
+        </div>
+        <h1 className="text-2xl font-semibold text-(--color-ink)">날짜메모</h1>
+        <p className="max-w-xs text-sm leading-relaxed text-(--color-muted)">
+          날짜별로 할 일과 메모를 남기는 캘린더 앱이에요.
+          <br />
+          비밀번호를 입력하고 시작해보세요.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="flex w-full max-w-xs flex-col gap-3">
+        <div className="flex items-center gap-2 rounded-full border border-(--color-border) bg-(--color-surface) px-4 py-3 shadow-sm focus-within:border-(--color-accent)">
+          <KeyRound className="h-4 w-4 shrink-0 text-(--color-muted)" />
+          <input
+            type="password"
+            inputMode="numeric"
+            autoFocus
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="비밀번호"
+            className="w-full bg-transparent text-sm text-(--color-ink) outline-none"
+          />
+        </div>
+
+        {error && <p className="text-center text-xs text-red-500">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={loading || !password}
+          className="rounded-full bg-(--color-accent) px-6 py-3 text-sm font-semibold text-(--color-accent-ink) shadow-sm transition hover:bg-(--color-accent-dark) active:scale-[0.98] disabled:opacity-40"
+        >
+          {loading ? "확인 중…" : "입장하기"}
+        </button>
+      </form>
+    </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
