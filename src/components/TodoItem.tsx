@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, CornerDownRight, Pencil, X } from "lucide-react";
 
 import type { TodoDTO } from "@/lib/types";
 
+const LONG_PRESS_MS = 500;
+
 export default function TodoItem({
   todo,
   replies = [],
-  onToggle,
   onDelete,
   onEdit,
   onReply,
@@ -16,7 +17,6 @@ export default function TodoItem({
 }: {
   todo: TodoDTO;
   replies?: TodoDTO[];
-  onToggle: (id: string, done: boolean) => void;
   onDelete: (id: string) => void;
   onEdit?: (id: string, text: string) => void;
   onReply?: (parentId: string, text: string) => Promise<boolean>;
@@ -29,6 +29,14 @@ export default function TodoItem({
   const [sending, setSending] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(todo.text);
+  const pressTimerRef = useRef<number | null>(null);
+  const longPressFiredRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      if (pressTimerRef.current !== null) window.clearTimeout(pressTimerRef.current);
+    };
+  }, []);
 
   async function submitReply() {
     const trimmed = replyText.trim();
@@ -55,9 +63,42 @@ export default function TodoItem({
     setEditing(false);
   }
 
+  function clearPressTimer() {
+    if (pressTimerRef.current !== null) {
+      window.clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+  }
+
+  // Tap the memo to edit it; press and hold to delete it — no more
+  // click-to-toggle-done (that "middle line" strikethrough tap surprised
+  // people on mobile, where there's no hover to warn them what a tap does).
+  function handlePressStart() {
+    longPressFiredRef.current = false;
+    clearPressTimer();
+    pressTimerRef.current = window.setTimeout(() => {
+      longPressFiredRef.current = true;
+      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(15);
+      onDelete(todo.id);
+    }, LONG_PRESS_MS);
+  }
+
+  function handlePressEnd() {
+    clearPressTimer();
+  }
+
+  function handlePillClick() {
+    if (longPressFiredRef.current) {
+      // Swallow the click that follows a long-press delete.
+      longPressFiredRef.current = false;
+      return;
+    }
+    startEdit();
+  }
+
   return (
     <div className="flex flex-col gap-2">
-      <div className="group flex items-center gap-3">
+      <div className="flex items-center gap-3">
         <span className="w-11 shrink-0 text-right text-xs tabular-nums text-(--color-muted)">
           {todo.time}
         </span>
@@ -114,11 +155,14 @@ export default function TodoItem({
           ) : (
             <button
               type="button"
-              onClick={() => onToggle(todo.id, !todo.done)}
-              className={[
-                "min-w-0 flex-1 text-left text-[15px] leading-snug",
-                todo.done ? "text-(--color-muted) line-through" : "text-(--color-ink)",
-              ].join(" ")}
+              onClick={handlePillClick}
+              onPointerDown={handlePressStart}
+              onPointerUp={handlePressEnd}
+              onPointerLeave={handlePressEnd}
+              onPointerCancel={handlePressEnd}
+              onContextMenu={(e) => e.preventDefault()}
+              style={{ WebkitTouchCallout: "none" }}
+              className="min-w-0 flex-1 select-none text-left text-[15px] leading-snug text-(--color-ink)"
             >
               {todo.text}
             </button>
@@ -130,7 +174,7 @@ export default function TodoItem({
             type="button"
             aria-label="수정"
             onClick={startEdit}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-(--color-muted) opacity-0 transition hover:bg-black/5 group-hover:opacity-100 focus-visible:opacity-100"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-(--color-muted) transition hover:bg-black/5"
           >
             <Pencil className="h-4 w-4" />
           </button>
@@ -144,8 +188,8 @@ export default function TodoItem({
             className={[
               "flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition",
               replying
-                ? "bg-(--color-accent)/15 text-(--color-accent-dark) opacity-100"
-                : "text-(--color-muted) opacity-0 hover:bg-black/5 group-hover:opacity-100 focus-visible:opacity-100",
+                ? "bg-(--color-accent)/15 text-(--color-accent-dark)"
+                : "text-(--color-muted) hover:bg-black/5",
             ].join(" ")}
           >
             <CornerDownRight className="h-4 w-4" />
@@ -161,9 +205,7 @@ export default function TodoItem({
           onBlur={() => setPendingDelete(false)}
           className={[
             "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-(--color-muted) transition",
-            pendingDelete
-              ? "bg-red-100 text-red-500 opacity-100"
-              : "opacity-0 hover:bg-black/5 group-hover:opacity-100 focus-visible:opacity-100",
+            pendingDelete ? "bg-red-100 text-red-500" : "hover:bg-black/5",
           ].join(" ")}
         >
           <X className="h-4 w-4" />
@@ -203,7 +245,6 @@ export default function TodoItem({
             <TodoItem
               key={reply.id}
               todo={reply}
-              onToggle={onToggle}
               onDelete={onDelete}
               onEdit={onEdit}
               isReply

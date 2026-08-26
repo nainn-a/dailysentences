@@ -83,15 +83,6 @@ export default function CalendarApp() {
     }
   }
 
-  async function handleToggle(id: string, done: boolean) {
-    setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, done } : t)));
-    await fetch(`/api/todos/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ done }),
-    });
-  }
-
   async function handleEdit(id: string, text: string) {
     setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, text } : t)));
     await fetch(`/api/todos/${id}`, {
@@ -191,7 +182,6 @@ export default function CalendarApp() {
                 key={todo.id}
                 todo={todo}
                 replies={repliesByParent[todo.id] ?? []}
-                onToggle={handleToggle}
                 onDelete={handleDelete}
                 onEdit={handleEdit}
                 onReply={handleReply}
