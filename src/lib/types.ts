@@ -7,6 +7,7 @@ export type TodoDTO = {
   createdAt: string;
   imageId?: string;
   imageUrl?: string;
+  parentId?: string;
 };
 
 export type ImageDTO = {

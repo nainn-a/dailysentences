@@ -7,6 +7,7 @@ import { LogOut, Plus } from "lucide-react";
 import {
   addDays,
   formatHeaderDate,
+  formatNowTime,
   startOfWeek,
   toDateKey,
 } from "@/lib/date";
@@ -92,18 +93,46 @@ export default function CalendarApp() {
   }
 
   async function handleDelete(id: string) {
-    setTodos((prev) => prev.filter((t) => t.id !== id));
+    // Deleting a memo takes its replies down with it — mirror that locally
+    // so the count and list stay in sync with the server-side cascade.
+    const removedCount = todos.filter((t) => t.id === id || t.parentId === id).length;
+    setTodos((prev) => prev.filter((t) => t.id !== id && t.parentId !== id));
     setCounts((prev) => ({
       ...prev,
-      [selectedKey]: Math.max(0, (prev[selectedKey] ?? 1) - 1),
+      [selectedKey]: Math.max(0, (prev[selectedKey] ?? removedCount) - removedCount),
     }));
     await fetch(`/api/todos/${id}`, { method: "DELETE" });
+  }
+
+  async function handleReply(parentId: string, text: string): Promise<boolean> {
+    const res = await fetch("/api/todos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: selectedKey, time: formatNowTime(), text, parentId }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setTodos((prev) => [data.todo, ...prev]);
+      setCounts((prev) => ({ ...prev, [selectedKey]: (prev[selectedKey] ?? 0) + 1 }));
+    }
+    return res.ok;
   }
 
   async function handleLogout() {
     await fetch("/api/logout", { method: "POST" });
     router.replace("/login");
     router.refresh();
+  }
+
+  const topLevelTodos = todos.filter((t) => !t.parentId);
+  const repliesByParent = todos.reduce<Record<string, TodoDTO[]>>((acc, t) => {
+    if (t.parentId) {
+      (acc[t.parentId] ??= []).push(t);
+    }
+    return acc;
+  }, {});
+  for (const list of Object.values(repliesByParent)) {
+    list.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   }
 
   return (
@@ -137,7 +166,7 @@ export default function CalendarApp() {
       <main className="relative flex-1 overflow-y-auto px-4 py-5 sm:px-6">
         {loading ? (
           <p className="mt-10 text-center text-sm text-(--color-muted)">불러오는 중…</p>
-        ) : todos.length === 0 ? (
+        ) : topLevelTodos.length === 0 ? (
           <div className="mt-16 flex flex-col items-center gap-2 text-center">
             <p className="text-sm text-(--color-muted)">
               이 날짜에 남긴 메모가 아직 없어요.
@@ -148,12 +177,14 @@ export default function CalendarApp() {
           </div>
         ) : (
           <div className="mx-auto flex max-w-2xl flex-col gap-3">
-            {todos.map((todo) => (
+            {topLevelTodos.map((todo) => (
               <TodoItem
                 key={todo.id}
                 todo={todo}
+                replies={repliesByParent[todo.id] ?? []}
                 onToggle={handleToggle}
                 onDelete={handleDelete}
+                onReply={handleReply}
               />
             ))}
           </div>

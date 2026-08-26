@@ -93,6 +93,7 @@ export function create(input: {
   text: string;
   imageId?: string;
   imageUrl?: string;
+  parentId?: string;
 }): Promise<TodoDTO> {
   return enqueue(async () => {
     const all = await readAll();
@@ -106,10 +107,22 @@ export function create(input: {
       ...(input.imageId && input.imageUrl
         ? { imageId: input.imageId, imageUrl: input.imageUrl }
         : {}),
+      ...(input.parentId ? { parentId: input.parentId } : {}),
     };
     all.push(todo);
     await writeAll(all);
     return todo;
+  });
+}
+
+// A memo one level deep — reachable from listByDate, but not itself a
+// valid reply target (no threads-of-threads). Used by the API route to
+// validate a reply's parentId before creating it.
+export function findTopLevel(date: string, id: string): Promise<TodoDTO | null> {
+  return enqueue(async () => {
+    const all = await readAll();
+    const todo = all.find((t) => t.id === id && t.date === date);
+    return todo && !todo.parentId ? todo : null;
   });
 }
 
@@ -130,14 +143,19 @@ export function update(
 export function remove(id: string): Promise<boolean> {
   return enqueue(async () => {
     const all = await readAll();
-    const todo = all.find((t) => t.id === id);
-    if (!todo) return false;
-    const next = all.filter((t) => t.id !== id);
+    // Deleting a memo takes its replies (one level, no threads-of-threads)
+    // down with it.
+    const removed = all.filter((t) => t.id === id || t.parentId === id);
+    if (removed.length === 0) return false;
+    const removedIds = new Set(removed.map((t) => t.id));
+    const next = all.filter((t) => !removedIds.has(t.id));
     await writeAll(next);
-    if (todo.imageId) {
-      // Best-effort — a stuck blob doesn't need to block the memo delete.
-      await deleteImage(todo.imageId).catch(() => {});
-    }
+    // Best-effort — a stuck blob doesn't need to block the memo delete.
+    await Promise.all(
+      removed
+        .filter((t) => t.imageId)
+        .map((t) => deleteImage(t.imageId!).catch(() => {})),
+    );
     return true;
   });
 }
