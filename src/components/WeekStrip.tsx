@@ -35,10 +35,11 @@ export default function WeekStrip({
               {WEEKDAY_LABELS_KO[i]}
             </span>
             <span
+              style={isSelected ? { backgroundImage: "var(--gradient-accent)" } : undefined}
               className={[
                 "flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition",
                 isSelected
-                  ? "bg-(--color-accent) text-(--color-accent-ink) shadow-sm"
+                  ? "text-(--color-accent-ink) shadow-sm"
                   : isToday
                     ? "text-(--color-accent-dark)"
                     : "text-(--color-ink)",

@@ -21,7 +21,7 @@ export function BottomNav({
   onSelect: (key: NavKey) => void;
 }) {
   return (
-    <nav className="flex items-center justify-around border-t border-(--color-border) bg-(--color-surface) px-2 pb-[env(safe-area-inset-bottom)] pt-2 md:hidden">
+    <nav className="glass flex items-center justify-around border-t border-(--color-border) bg-(--color-surface) px-2 pb-[env(safe-area-inset-bottom)] pt-2 md:hidden">
       {NAV_ITEMS.map(({ key, icon: Icon }) => (
         <button
           key={key}
@@ -49,7 +49,7 @@ export function SideRail({
   onSelect: (key: NavKey) => void;
 }) {
   return (
-    <nav className="hidden w-20 shrink-0 flex-col items-center gap-1 border-r border-(--color-border) bg-(--color-surface) py-6 md:flex">
+    <nav className="glass hidden w-20 shrink-0 flex-col items-center gap-1 border-r border-(--color-border) bg-(--color-surface) py-6 md:flex">
       {NAV_ITEMS.map(({ key, label, icon: Icon }) => (
         <button
           key={key}

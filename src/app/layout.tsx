@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Noto_Sans_KR } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const notoSansKr = Noto_Sans_KR({
+const suit = localFont({
+  src: "../fonts/SUIT-Variable.woff2",
   variable: "--font-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: "100 900",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -22,8 +23,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ko" className={`${notoSansKr.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-(--color-app-bg) text-(--color-ink)">
+    <html lang="ko" className={`${suit.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col text-(--color-ink)">
         {children}
       </body>
     </html>

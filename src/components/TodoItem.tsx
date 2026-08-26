@@ -26,7 +26,7 @@ export default function TodoItem({
         type="button"
         onClick={() => onToggle(todo.id, !todo.done)}
         className={[
-          "min-w-0 flex-1 rounded-2xl bg-(--color-pill) px-4 py-3 text-left text-[15px] leading-snug shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition",
+          "glass min-w-0 flex-1 rounded-2xl bg-(--color-pill) px-4 py-3 text-left text-[15px] leading-snug shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition",
           todo.done ? "text-(--color-muted) line-through" : "text-(--color-ink)",
         ].join(" ")}
       >

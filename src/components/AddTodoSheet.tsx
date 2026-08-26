@@ -41,7 +41,7 @@ export default function AddTodoSheet({
         className="absolute inset-0"
       />
 
-      <div className="relative w-full max-w-md rounded-t-3xl bg-(--color-surface) p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] shadow-xl sm:rounded-3xl sm:pb-5">
+      <div className="glass relative w-full max-w-md rounded-t-3xl bg-(--color-surface) p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] shadow-xl sm:rounded-3xl sm:pb-5">
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-(--color-border) sm:hidden" />
 
         <h2 className="text-sm font-medium text-(--color-muted)">{dateLabel}</h2>
@@ -83,7 +83,8 @@ export default function AddTodoSheet({
             <button
               type="submit"
               disabled={!text.trim()}
-              className="flex-1 rounded-xl bg-(--color-accent) px-4 py-2.5 text-sm font-semibold text-(--color-accent-ink) disabled:opacity-40"
+              style={{ backgroundImage: "var(--gradient-accent)" }}
+              className="flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold text-(--color-accent-ink) transition hover:brightness-105 disabled:opacity-40"
             >
               추가
             </button>

@@ -109,12 +109,12 @@ export default function CalendarApp() {
   }
 
   return (
-    <div className="flex h-dvh min-h-dvh bg-(--color-app-bg)">
+    <div className="flex h-dvh min-h-dvh">
       <SideRail active={nav} onSelect={handleNavSelect} />
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-(--color-border) bg-(--color-surface) px-4 py-4 sm:px-6">
+        <header className="glass flex items-center justify-between border-b border-(--color-border) bg-(--color-surface) px-4 py-4 sm:px-6">
           <h1 className="text-xl font-semibold text-(--color-ink)">{headerDate}</h1>
           <div className="flex items-center gap-3">
             <button
@@ -129,7 +129,7 @@ export default function CalendarApp() {
         </header>
 
         {/* Week strip */}
-        <div className="border-b border-(--color-border) bg-(--color-surface)">
+        <div className="glass border-b border-(--color-border) bg-(--color-surface)">
           <WeekStrip
             weekStart={weekStart}
             selected={selected}
@@ -168,7 +168,8 @@ export default function CalendarApp() {
             type="button"
             onClick={() => setShowAdd(true)}
             aria-label="새 메모 추가"
-            className="fixed bottom-24 right-5 flex h-14 w-14 items-center justify-center rounded-full bg-(--color-accent) text-(--color-accent-ink) shadow-lg transition hover:bg-(--color-accent-dark) active:scale-95 md:bottom-8 md:right-8"
+            style={{ backgroundImage: "var(--gradient-accent)" }}
+            className="fixed bottom-24 right-5 flex h-14 w-14 items-center justify-center rounded-full text-(--color-accent-ink) shadow-lg transition hover:brightness-105 active:scale-95 md:bottom-8 md:right-8"
           >
             <Plus className="h-6 w-6" />
           </button>
