@@ -36,27 +36,44 @@ export default function ImageGallery() {
     return () => window.clearTimeout(timer);
   }, [error]);
 
-  async function handleFiles(files: FileList | null) {
-    if (!files || files.length === 0) return;
-    setUploading(true);
-    for (const file of Array.from(files)) {
-      if (!file.type.startsWith("image/")) {
-        setError("이미지 파일만 업로드할 수 있어요.");
-        continue;
+  const handleFiles = useCallback(
+    async (files: FileList | File[] | null) => {
+      if (!files || files.length === 0) return;
+      setUploading(true);
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith("image/")) {
+          setError("이미지 파일만 업로드할 수 있어요.");
+          continue;
+        }
+        const form = new FormData();
+        form.append("file", file);
+        const res = await fetch("/api/images", { method: "POST", body: form });
+        if (!res.ok) {
+          const data = await res.json().catch(() => null);
+          setError(data?.error ?? "업로드에 실패했어요.");
+          break;
+        }
       }
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch("/api/images", { method: "POST", body: form });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        setError(data?.error ?? "업로드에 실패했어요.");
-        break;
-      }
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      await loadImages();
+    },
+    [loadImages],
+  );
+
+  useEffect(() => {
+    function onPaste(e: ClipboardEvent) {
+      const item = Array.from(e.clipboardData?.items ?? []).find((i) =>
+        i.type.startsWith("image/"),
+      );
+      const file = item?.getAsFile();
+      if (!file) return;
+      e.preventDefault();
+      handleFiles([file]);
     }
-    setUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    await loadImages();
-  }
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [handleFiles]);
 
   async function handleDelete(id: string) {
     setPreview(null);
@@ -94,7 +111,7 @@ export default function ImageGallery() {
           <div className="mt-16 flex flex-col items-center gap-2 text-center">
             <p className="text-sm text-(--color-muted)">아직 업로드한 이미지가 없어요.</p>
             <p className="text-xs text-(--color-muted)">
-              오른쪽 아래 + 버튼으로 이미지를 추가해보세요.
+              오른쪽 아래 + 버튼으로 추가하거나, 복사한 사진을 붙여넣기(Ctrl+V)해보세요.
             </p>
           </div>
         ) : (

@@ -17,7 +17,7 @@ import type { ImageDTO } from "@/lib/types";
 const BLOB_PREFIX = "dailysentences-images/";
 const DATA_DIR = path.join(process.cwd(), "data", "images");
 
-export const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // stays under Vercel's serverless request-body cap
+export const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // stays well under Vercel's ~4.5MB serverless request-body cap
 
 function hasBlob(): boolean {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN);

@@ -53,8 +53,7 @@ export default function AddTodoSheet({
     };
   }, [image]);
 
-  async function handleFileChange(files: FileList | null) {
-    const file = files?.[0];
+  async function handleFile(file: File | null | undefined) {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       setError("이미지 파일만 첨부할 수 있어요.");
@@ -75,6 +74,15 @@ export default function AddTodoSheet({
     }
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function handlePaste(e: React.ClipboardEvent<HTMLFormElement>) {
+    if (image || uploading) return;
+    const item = Array.from(e.clipboardData.items).find((i) => i.type.startsWith("image/"));
+    const file = item?.getAsFile();
+    if (!file) return;
+    e.preventDefault();
+    handleFile(file);
   }
 
   async function handleRemoveImage() {
@@ -112,6 +120,7 @@ export default function AddTodoSheet({
             e.preventDefault();
             submit();
           }}
+          onPaste={handlePaste}
           className="mt-3 flex flex-col gap-3"
         >
           <input
@@ -138,7 +147,7 @@ export default function AddTodoSheet({
             type="file"
             accept="image/*"
             hidden
-            onChange={(e) => handleFileChange(e.target.files)}
+            onChange={(e) => handleFile(e.target.files?.[0])}
           />
 
           {image ? (
@@ -166,7 +175,7 @@ export default function AddTodoSheet({
               className="flex w-fit items-center gap-1.5 rounded-lg border border-dashed border-(--color-border) px-3 py-1.5 text-xs font-medium text-(--color-muted) transition hover:border-(--color-accent) hover:text-(--color-accent-dark) disabled:opacity-50"
             >
               <ImagePlus className="h-3.5 w-3.5" />
-              {uploading ? "업로드 중…" : "사진 추가"}
+              {uploading ? "업로드 중…" : "사진 추가 (붙여넣기 가능)"}
             </button>
           )}
 
