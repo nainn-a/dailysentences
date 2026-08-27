@@ -164,34 +164,39 @@ export default function TodoItem({
                 </button>
               </div>
 
-              <div className="flex flex-wrap items-center gap-1.5">
-                {CATEGORY_COLORS.map((c) => (
-                  <button
-                    key={c.value}
-                    type="button"
-                    aria-label={c.label}
-                    onClick={() =>
-                      setEditCategoryColor((cur) => (cur === c.value ? null : c.value))
-                    }
-                    className={[
-                      "h-5 w-5 shrink-0 rounded-full transition",
-                      editCategoryColor === c.value
-                        ? "ring-2 ring-(--color-accent) ring-offset-1"
-                        : "",
-                    ].join(" ")}
-                    style={{ backgroundColor: c.value }}
-                  />
-                ))}
-                {editCategoryColor && (
-                  <input
-                    value={editCategoryLabel}
-                    onChange={(e) => setEditCategoryLabel(e.target.value)}
-                    maxLength={20}
-                    placeholder="카테고리 이름"
-                    className="min-w-0 flex-1 rounded border border-(--color-border) bg-transparent px-2 py-1 text-xs text-(--color-ink) outline-none"
-                  />
-                )}
-              </div>
+              {/* Replies can't carry their own category — keeps "browse by
+                  category" simple: a color always belongs to a top-level
+                  memo, never to a comment on one. */}
+              {!isReply && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {CATEGORY_COLORS.map((c) => (
+                    <button
+                      key={c.value}
+                      type="button"
+                      aria-label={c.label}
+                      onClick={() =>
+                        setEditCategoryColor((cur) => (cur === c.value ? null : c.value))
+                      }
+                      className={[
+                        "h-5 w-5 shrink-0 rounded-full transition",
+                        editCategoryColor === c.value
+                          ? "ring-2 ring-(--color-accent) ring-offset-1"
+                          : "",
+                      ].join(" ")}
+                      style={{ backgroundColor: c.value }}
+                    />
+                  ))}
+                  {editCategoryColor && (
+                    <input
+                      value={editCategoryLabel}
+                      onChange={(e) => setEditCategoryLabel(e.target.value)}
+                      maxLength={20}
+                      placeholder="카테고리 이름"
+                      className="min-w-0 flex-1 rounded border border-(--color-border) bg-transparent px-2 py-1 text-xs text-(--color-ink) outline-none"
+                    />
+                  )}
+                </div>
+              )}
             </form>
           ) : (
             <button

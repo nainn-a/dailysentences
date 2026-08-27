@@ -6,6 +6,7 @@ import { BottomNav, SideRail, type NavKey } from "@/components/NavRail";
 
 const PATH_TO_NAV_KEY: Record<string, NavKey> = {
   "/calendar": "calendar",
+  "/category": "category",
   "/image": "image",
 };
 

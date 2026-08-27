@@ -74,6 +74,22 @@ export function listByDate(date: string): Promise<TodoDTO[]> {
   });
 }
 
+// Every memo tagged with this category color, across every date — plus
+// their replies for context (a reply can't carry its own category; see
+// TodoItem). Used by the standalone 카테고리 tab, sorted most-recent-day
+// first rather than createdAt, since browsing is date-oriented there.
+export function listByCategory(color: string): Promise<TodoDTO[]> {
+  return enqueue(async () => {
+    const all = await readAll();
+    const matchingParentIds = new Set(
+      all.filter((t) => !t.parentId && t.categoryColor === color).map((t) => t.id),
+    );
+    return all
+      .filter((t) => matchingParentIds.has(t.id) || (t.parentId && matchingParentIds.has(t.parentId)))
+      .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+  });
+}
+
 export function countsBetween(start: string, end: string): Promise<Record<string, number>> {
   return enqueue(async () => {
     const all = await readAll();

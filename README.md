@@ -7,6 +7,7 @@
 - 메모가 있는 날짜는 점(●)으로 표시
 - **이미지** 탭에서 사진을 업로드하고 그리드로 모아보기(클릭하면 크게 보기 + 삭제)
 - 메모에 6가지 색상 중 하나로 **카테고리** 태그를 붙일 수 있음(추가·수정 시 색상 원 클릭), 색상 칩으로 그 날짜의 메모를 필터링해서 보기
+- 별도 **카테고리** 탭에서 색상 하나를 고르면 날짜에 상관없이 그 카테고리의 메모를 전부 모아보기(수정·삭제·답장 가능)
 - 캘린더 화면 상단 **메모 / 일기** 탭 전환 — **일기**에서는 날짜별로 길게 글을 쓰고 사진도 삽입할 수 있음(입력 멈추면 자동 저장)
 - 아이폰 **단축어(Shortcuts)** 위젯으로 오늘의 메모를 홈 화면에 띄우기 (아래 "단축어 위젯" 참고)
 - 비밀번호 없이는 어떤 화면·API도 볼 수 없음(미들웨어에서 매 요청마다 검사, 단축어 위젯 API는 예외로 별도 토큰 사용)
@@ -109,14 +110,15 @@ src/
   app/
     login/            # 비밀번호 입력 화면
     calendar/          # 캘린더 화면
-    image/              # 이미지 업로드/갤러리 화면
+    category/           # 카테고리별 메모 모아보기 화면
+    image/                # 이미지 업로드/갤러리 화면
     api/login/           # 비밀번호 확인 + 로그인 쿠키 발급
     api/logout/           # 로그인 쿠키 삭제
     api/todos/              # 메모 CRUD API
     api/images/              # 이미지 업로드/목록/삭제 API
     api/diary/                # 일기 조회/저장 API
     api/widget/                 # 단축어 위젯용 토큰 인증 조회 API
-  components/            # AppShell, CalendarApp, DiaryEditor, ImageGallery, WeekStrip, TodoItem, AddTodoSheet, NavRail 등
+  components/            # AppShell, CalendarApp, CategoryBrowser, DiaryEditor, ImageGallery, WeekStrip, TodoItem, AddTodoSheet, NavRail 등
   lib/
     auth-cookie.ts          # 비밀번호 확인 + 쿠키 서명/검증
     store.ts                 # 메모 저장 (Redis 연결돼 있으면 Redis, 아니면 data/todos.json)

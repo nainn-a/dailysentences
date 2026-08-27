@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { AUTH_COOKIE_NAME, isValidAuthCookieValue } from "@/lib/auth-cookie";
 import { isKnownCategoryColor } from "@/lib/categories";
-import { countsBetween, create, findTopLevel, listByDate } from "@/lib/store";
+import { countsBetween, create, findTopLevel, listByCategory, listByDate } from "@/lib/store";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^\d{2}:\d{2}$/;
@@ -17,6 +17,8 @@ async function requireAuth() {
 // GET /api/todos?date=YYYY-MM-DD          -> that day's items, newest first
 // GET /api/todos?start=YYYY-MM-DD&end=... -> { "YYYY-MM-DD": count, ... }
 //     used to paint the "has entries" dot under each day in the week strip.
+// GET /api/todos?category=<hex>           -> every memo with that category
+//     color, across every date — used by the 카테고리 tab.
 export async function GET(request: Request) {
   if (!(await requireAuth())) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
@@ -26,6 +28,7 @@ export async function GET(request: Request) {
   const date = searchParams.get("date");
   const start = searchParams.get("start");
   const end = searchParams.get("end");
+  const category = searchParams.get("category");
 
   if (date) {
     if (!DATE_RE.test(date)) {
@@ -43,8 +46,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ counts });
   }
 
+  if (category) {
+    if (!isKnownCategoryColor(category)) {
+      return NextResponse.json({ error: "지원하지 않는 카테고리 색상입니다." }, { status: 400 });
+    }
+    const todos = await listByCategory(category);
+    return NextResponse.json({ todos });
+  }
+
   return NextResponse.json(
-    { error: "date 또는 start/end 쿼리 파라미터가 필요합니다." },
+    { error: "date, start/end 또는 category 쿼리 파라미터가 필요합니다." },
     { status: 400 },
   );
 }
