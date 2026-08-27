@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { Check, LogOut, Pencil, X } from "lucide-react";
 
 import { CATEGORY_COLORS } from "@/lib/categories";
 import { formatHeaderDate, formatNowTime, fromDateKey } from "@/lib/date";
@@ -14,6 +14,9 @@ export default function CategoryBrowser() {
   const [color, setColor] = useState<string | null>(null);
   const [todos, setTodos] = useState<TodoDTO[]>([]);
   const [loading, setLoading] = useState(false);
+  const [names, setNames] = useState<Record<string, string>>({});
+  const [renamingColor, setRenamingColor] = useState<string | null>(null);
+  const [renameText, setRenameText] = useState("");
 
   const load = useCallback(async (c: string) => {
     setLoading(true);
@@ -23,12 +26,45 @@ export default function CategoryBrowser() {
   }, []);
 
   useEffect(() => {
+    (async () => {
+      const res = await fetch("/api/category-names");
+      if (res.ok) {
+        const data = await res.json();
+        setNames(data.names ?? {});
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
     // Nothing to fetch with no color selected — the render below shows a
     // prompt instead of the (stale, but hidden) list in that case.
     if (!color) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetch on color change, not derived state
     load(color);
   }, [color, load]);
+
+  function startRename(c: string) {
+    setRenamingColor(c);
+    setRenameText(names[c] ?? "");
+  }
+
+  async function submitRename() {
+    if (!renamingColor) return;
+    const target = renamingColor;
+    const trimmed = renameText.trim();
+    setNames((prev) => {
+      const next = { ...prev };
+      if (trimmed) next[target] = trimmed;
+      else delete next[target];
+      return next;
+    });
+    setRenamingColor(null);
+    await fetch("/api/category-names", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ color: target, name: trimmed }),
+    });
+  }
 
   async function handleDelete(id: string) {
     setTodos((prev) => prev.filter((t) => t.id !== id && t.parentId !== id));
@@ -127,19 +163,81 @@ export default function CategoryBrowser() {
 
       <main className="relative flex-1 overflow-y-auto px-4 py-5 sm:px-6">
         <div className="mx-auto flex max-w-2xl flex-wrap items-center gap-2">
-          {CATEGORY_COLORS.map((c) => (
-            <button
-              key={c.value}
-              type="button"
-              aria-label={c.label}
-              onClick={() => setColor((cur) => (cur === c.value ? null : c.value))}
-              className={[
-                "h-8 w-8 shrink-0 rounded-full transition",
-                color === c.value ? "ring-2 ring-(--color-accent) ring-offset-2" : "",
-              ].join(" ")}
-              style={{ backgroundColor: c.value }}
-            />
-          ))}
+          {CATEGORY_COLORS.map((c) =>
+            renamingColor === c.value ? (
+              <form
+                key={c.value}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submitRename();
+                }}
+                className="glass flex items-center gap-1.5 rounded-full border border-(--color-border) bg-(--color-surface-strong) py-1 pl-3 pr-1.5"
+              >
+                <span
+                  aria-hidden
+                  className="h-3 w-3 shrink-0 rounded-full"
+                  style={{ backgroundColor: c.value }}
+                />
+                <input
+                  autoFocus
+                  aria-label={`${c.label} 이름 입력`}
+                  value={renameText}
+                  onChange={(e) => setRenameText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") setRenamingColor(null);
+                  }}
+                  maxLength={10}
+                  placeholder={c.label}
+                  className="w-16 bg-transparent text-xs text-(--color-ink) outline-none"
+                />
+                <button
+                  type="submit"
+                  aria-label="이름 저장"
+                  className="flex h-5 w-5 shrink-0 items-center justify-center text-(--color-accent-dark)"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRenamingColor(null)}
+                  aria-label="이름 수정 취소"
+                  className="flex h-5 w-5 shrink-0 items-center justify-center text-(--color-muted)"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </form>
+            ) : (
+              <div key={c.value} className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setColor((cur) => (cur === c.value ? null : c.value))}
+                  className={[
+                    "flex items-center gap-1.5 rounded-full py-1.5 pl-1.5 pr-3 transition",
+                    color === c.value
+                      ? "bg-(--color-surface-strong) ring-2 ring-(--color-accent)"
+                      : "bg-black/5 hover:bg-black/10",
+                  ].join(" ")}
+                >
+                  <span
+                    aria-hidden
+                    className="h-5 w-5 shrink-0 rounded-full"
+                    style={{ backgroundColor: c.value }}
+                  />
+                  <span className="text-xs font-medium text-(--color-ink)">
+                    {names[c.value] || c.label}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => startRename(c.value)}
+                  aria-label={`${c.label} 이름 수정`}
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-(--color-muted) transition hover:bg-black/5"
+                >
+                  <Pencil className="h-3 w-3" />
+                </button>
+              </div>
+            ),
+          )}
         </div>
 
         <div className="mx-auto mt-6 flex max-w-2xl flex-col gap-6">
