@@ -11,10 +11,14 @@ import {
   startOfWeek,
   toDateKey,
 } from "@/lib/date";
+import { CATEGORY_COLORS } from "@/lib/categories";
 import type { TodoDTO } from "@/lib/types";
 import WeekStrip from "@/components/WeekStrip";
 import TodoItem from "@/components/TodoItem";
 import AddTodoSheet from "@/components/AddTodoSheet";
+import DiaryEditor from "@/components/DiaryEditor";
+
+type ViewMode = "memo" | "diary";
 
 export default function CalendarApp() {
   const router = useRouter();
@@ -23,6 +27,8 @@ export default function CalendarApp() {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  const [filterColor, setFilterColor] = useState<string | null>(null);
+  const [view, setView] = useState<ViewMode>("memo");
 
   const weekStart = useMemo(() => startOfWeek(selected), [selected]);
   const selectedKey = toDateKey(selected);
@@ -50,7 +56,8 @@ export default function CalendarApp() {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetch on date change, not derived state
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetch + filter reset on date change, not derived state
+    setFilterColor(null);
     loadDayTodos(selectedKey);
   }, [selectedKey, loadDayTodos]);
 
@@ -159,6 +166,13 @@ export default function CalendarApp() {
     list.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   }
 
+  const usedColors = CATEGORY_COLORS.filter((c) =>
+    topLevelTodos.some((t) => t.categoryColor === c.value),
+  );
+  const visibleTodos = filterColor
+    ? topLevelTodos.filter((t) => t.categoryColor === filterColor)
+    : topLevelTodos;
+
   return (
     <>
       {/* Header */}
@@ -186,44 +200,103 @@ export default function CalendarApp() {
         />
       </div>
 
-      {/* Todo list */}
-      <main className="relative flex-1 overflow-y-auto px-4 py-5 sm:px-6">
-        {loading ? (
-          <p className="mt-10 text-center text-sm text-(--color-muted)">불러오는 중…</p>
-        ) : topLevelTodos.length === 0 ? (
-          <div className="mt-16 flex flex-col items-center gap-2 text-center">
-            <p className="text-sm text-(--color-muted)">
-              이 날짜에 남긴 메모가 아직 없어요.
-            </p>
-            <p className="text-xs text-(--color-muted)">
-              오른쪽 아래 + 버튼으로 새 메모를 추가해보세요.
-            </p>
-          </div>
-        ) : (
-          <div className="mx-auto flex max-w-2xl flex-col gap-3">
-            {topLevelTodos.map((todo) => (
-              <TodoItem
-                key={todo.id}
-                todo={todo}
-                replies={repliesByParent[todo.id] ?? []}
-                onDelete={handleDelete}
-                onEdit={handleEdit}
-                onReply={handleReply}
-              />
-            ))}
-          </div>
-        )}
+      {/* Memo / Diary segmented toggle */}
+      <div className="glass flex justify-center border-b border-(--color-border) bg-(--color-surface) px-4 py-2 sm:px-6">
+        <div className="flex gap-1 rounded-full bg-black/5 p-1">
+          {(["memo", "diary"] as const).map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setView(key)}
+              className={[
+                "rounded-full px-4 py-1.5 text-sm font-medium transition",
+                view === key
+                  ? "bg-(--color-surface-strong) text-(--color-ink) shadow-sm"
+                  : "text-(--color-muted)",
+              ].join(" ")}
+            >
+              {key === "memo" ? "메모" : "일기"}
+            </button>
+          ))}
+        </div>
+      </div>
 
-        <button
-          type="button"
-          onClick={() => setShowAdd(true)}
-          aria-label="새 메모 추가"
-          style={{ backgroundImage: "var(--gradient-accent)" }}
-          className="fixed bottom-24 right-5 flex h-14 w-14 items-center justify-center rounded-full text-(--color-accent-ink) shadow-lg transition hover:brightness-105 active:scale-95 md:bottom-8 md:right-8"
-        >
-          <Plus className="h-6 w-6" />
-        </button>
-      </main>
+      {view === "diary" ? (
+        <main className="relative flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+          <DiaryEditor date={selectedKey} dateLabel={headerDate} />
+        </main>
+      ) : (
+        /* Todo list */
+        <main className="relative flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+          {usedColors.length > 0 && (
+            <div className="mx-auto mb-4 flex max-w-2xl flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setFilterColor(null)}
+                className={[
+                  "rounded-full px-3 py-1 text-xs font-medium transition",
+                  filterColor === null
+                    ? "bg-(--color-ink) text-white"
+                    : "bg-black/5 text-(--color-muted) hover:bg-black/10",
+                ].join(" ")}
+              >
+                전체
+              </button>
+              {usedColors.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  aria-label={c.label}
+                  onClick={() => setFilterColor((cur) => (cur === c.value ? null : c.value))}
+                  className={[
+                    "h-6 w-6 shrink-0 rounded-full transition",
+                    filterColor === c.value ? "ring-2 ring-(--color-accent) ring-offset-2" : "",
+                  ].join(" ")}
+                  style={{ backgroundColor: c.value }}
+                />
+              ))}
+            </div>
+          )}
+
+          {loading ? (
+            <p className="mt-10 text-center text-sm text-(--color-muted)">불러오는 중…</p>
+          ) : visibleTodos.length === 0 ? (
+            <div className="mt-16 flex flex-col items-center gap-2 text-center">
+              <p className="text-sm text-(--color-muted)">
+                {filterColor
+                  ? "이 색상의 메모가 없어요."
+                  : "이 날짜에 남긴 메모가 아직 없어요."}
+              </p>
+              <p className="text-xs text-(--color-muted)">
+                오른쪽 아래 + 버튼으로 새 메모를 추가해보세요.
+              </p>
+            </div>
+          ) : (
+            <div className="mx-auto flex max-w-2xl flex-col gap-3">
+              {visibleTodos.map((todo) => (
+                <TodoItem
+                  key={todo.id}
+                  todo={todo}
+                  replies={repliesByParent[todo.id] ?? []}
+                  onDelete={handleDelete}
+                  onEdit={handleEdit}
+                  onReply={handleReply}
+                />
+              ))}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setShowAdd(true)}
+            aria-label="새 메모 추가"
+            style={{ backgroundImage: "var(--gradient-accent)" }}
+            className="fixed bottom-24 right-5 flex h-14 w-14 items-center justify-center rounded-full text-(--color-accent-ink) shadow-lg transition hover:brightness-105 active:scale-95 md:bottom-8 md:right-8"
+          >
+            <Plus className="h-6 w-6" />
+          </button>
+        </main>
+      )}
 
       {showAdd && (
         <AddTodoSheet

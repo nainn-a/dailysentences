@@ -17,3 +17,15 @@ export type ImageDTO = {
   url: string;
   uploadedAt: string;
 };
+
+export type DiaryImage = {
+  id: string;
+  url: string;
+};
+
+export type DiaryDTO = {
+  date: string;
+  content: string;
+  images: DiaryImage[];
+  updatedAt: string;
+};

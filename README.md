@@ -6,7 +6,8 @@
 - 선택한 날짜에 시간이 찍힌 메모/할 일 카드를 추가·완료 표시·삭제
 - 메모가 있는 날짜는 점(●)으로 표시
 - **이미지** 탭에서 사진을 업로드하고 그리드로 모아보기(클릭하면 크게 보기 + 삭제)
-- 메모에 6가지 색상 중 하나로 **카테고리** 태그를 붙일 수 있음(추가·수정 시 색상 원 클릭)
+- 메모에 6가지 색상 중 하나로 **카테고리** 태그를 붙일 수 있음(추가·수정 시 색상 원 클릭), 색상 칩으로 그 날짜의 메모를 필터링해서 보기
+- 캘린더 화면 상단 **메모 / 일기** 탭 전환 — **일기**에서는 날짜별로 길게 글을 쓰고 사진도 삽입할 수 있음(입력 멈추면 자동 저장)
 - 아이폰 **단축어(Shortcuts)** 위젯으로 오늘의 메모를 홈 화면에 띄우기 (아래 "단축어 위젯" 참고)
 - 비밀번호 없이는 어떤 화면·API도 볼 수 없음(미들웨어에서 매 요청마다 검사, 단축어 위젯 API는 예외로 별도 토큰 사용)
 
@@ -19,7 +20,7 @@
 - [Next.js 16](https://nextjs.org) (App Router, TypeScript)
 - [Tailwind CSS v4](https://tailwindcss.com)
 - 비밀번호 로그인: 서명된 쿠키 1개(계정/DB 세션 없음)
-- 데이터 저장: 로컬에서는 `data/todos.json` 파일, Vercel에 Redis(Upstash) 스토리지를 연결하면 자동으로 그쪽에 저장 (아래 "배포하기" 참고)
+- 데이터 저장: 로컬에서는 `data/todos.json`(메모) / `data/diary.json`(일기) 파일, Vercel에 Redis(Upstash) 스토리지를 연결하면 자동으로 그쪽에 저장 (아래 "배포하기" 참고)
 - 이미지 저장: 로컬에서는 `data/images/` 폴더, Vercel에 Blob 스토리지를 연결하면 자동으로 그쪽에 저장 (아래 "배포하기" 참고)
 
 ## 로컬에서 실행하기
@@ -113,15 +114,18 @@ src/
     api/logout/           # 로그인 쿠키 삭제
     api/todos/              # 메모 CRUD API
     api/images/              # 이미지 업로드/목록/삭제 API
-    api/widget/               # 단축어 위젯용 토큰 인증 조회 API
-  components/            # AppShell, CalendarApp, ImageGallery, WeekStrip, TodoItem, AddTodoSheet, NavRail 등
+    api/diary/                # 일기 조회/저장 API
+    api/widget/                 # 단축어 위젯용 토큰 인증 조회 API
+  components/            # AppShell, CalendarApp, DiaryEditor, ImageGallery, WeekStrip, TodoItem, AddTodoSheet, NavRail 등
   lib/
     auth-cookie.ts          # 비밀번호 확인 + 쿠키 서명/검증
     store.ts                 # 메모 저장 (Redis 연결돼 있으면 Redis, 아니면 data/todos.json)
     image-store.ts             # 이미지 저장 (Blob 연결돼 있으면 Blob, 아니면 data/images/)
-    categories.ts                # 카테고리 색상 팔레트
-    date.ts                        # 날짜 유틸리티
+    diary-store.ts               # 일기 저장 (Redis 연결돼 있으면 Redis, 아니면 data/diary.json)
+    categories.ts                  # 카테고리 색상 팔레트
+    date.ts                          # 날짜 유틸리티
   proxy.ts                      # 모든 요청에서 로그인 쿠키를 검사하는 미들웨어
 data/todos.json                  # 실제 메모 데이터 (git에는 포함되지 않음, 실행 시 자동 생성)
+data/diary.json                  # 실제 일기 데이터 (git에는 포함되지 않음, 실행 시 자동 생성)
 data/images/                     # 실제 이미지 파일 (git에는 포함되지 않음, 실행 시 자동 생성)
 ```
