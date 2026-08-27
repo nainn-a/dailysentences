@@ -23,6 +23,9 @@ export default function ImageGallery() {
     if (res.ok) {
       const data = await res.json();
       setImages(data.images ?? []);
+    } else {
+      const data = await res.json().catch(() => null);
+      setError(data?.error ?? "이미지 목록을 불러오지 못했어요.");
     }
     setLoading(false);
   }, []);
