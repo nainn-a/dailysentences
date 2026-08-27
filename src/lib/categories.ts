@@ -4,12 +4,12 @@
 // no CSS to color a dot with.
 
 export const CATEGORY_COLORS = [
-  { label: "레드", value: "#ef4444", emoji: "🔴" },
-  { label: "오렌지", value: "#f97316", emoji: "🟠" },
-  { label: "옐로우", value: "#eab308", emoji: "🟡" },
-  { label: "그린", value: "#22c55e", emoji: "🟢" },
-  { label: "블루", value: "#3b82f6", emoji: "🔵" },
-  { label: "퍼플", value: "#a855f7", emoji: "🟣" },
+  { label: "레드", value: "#f5a8a8", emoji: "🔴" },
+  { label: "오렌지", value: "#f8c99c", emoji: "🟠" },
+  { label: "옐로우", value: "#f2df9c", emoji: "🟡" },
+  { label: "그린", value: "#a9dfba", emoji: "🟢" },
+  { label: "블루", value: "#a6cdf0", emoji: "🔵" },
+  { label: "퍼플", value: "#cbb4ee", emoji: "🟣" },
 ] as const;
 
 export function emojiForCategoryColor(color: string | undefined): string | null {

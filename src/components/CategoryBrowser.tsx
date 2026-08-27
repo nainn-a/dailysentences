@@ -71,22 +71,13 @@ export default function CategoryBrowser() {
     await fetch(`/api/todos/${id}`, { method: "DELETE" });
   }
 
-  async function handleEdit(
-    id: string,
-    text: string,
-    category: { color: string | null; label?: string },
-  ) {
+  async function handleEdit(id: string, text: string, category: { color: string | null }) {
     setTodos((prev) => {
       const updated = prev.map((t) => {
         if (t.id !== id) return t;
         const next: TodoDTO = { ...t, text };
-        if (category.color) {
-          next.categoryColor = category.color;
-          next.categoryLabel = category.label;
-        } else {
-          delete next.categoryColor;
-          delete next.categoryLabel;
-        }
+        if (category.color) next.categoryColor = category.color;
+        else delete next.categoryColor;
         return next;
       });
       // Recolored away from the tab we're browsing — it (and its replies)
@@ -100,11 +91,7 @@ export default function CategoryBrowser() {
     await fetch(`/api/todos/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        text,
-        categoryColor: category.color ?? null,
-        categoryLabel: category.color ? (category.label ?? null) : null,
-      }),
+      body: JSON.stringify({ text, categoryColor: category.color ?? null }),
     });
   }
 
@@ -262,6 +249,7 @@ export default function CategoryBrowser() {
                     key={todo.id}
                     todo={todo}
                     replies={repliesByParent[todo.id] ?? []}
+                    categoryNames={names}
                     onDelete={handleDelete}
                     onEdit={handleEdit}
                     onReply={(parentId, text) => handleReply(parentId, text, todo.date)}

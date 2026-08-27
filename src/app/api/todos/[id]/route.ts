@@ -11,10 +11,9 @@ async function requireAuth() {
   return ok;
 }
 
-// PATCH /api/todos/:id { done?, text?, categoryColor?, categoryLabel? }
+// PATCH /api/todos/:id { done?, text?, categoryColor? }
 // -> toggle completion, edit text, and/or change the category tag.
-// categoryColor/categoryLabel: omit to leave untouched, string to set,
-// null to clear.
+// categoryColor: omit to leave untouched, string to set, null to clear.
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -29,7 +28,6 @@ export async function PATCH(
     done?: boolean;
     text?: string;
     categoryColor?: string | null;
-    categoryLabel?: string | null;
   } = {};
 
   if (typeof body?.done === "boolean") patch.done = body.done;
@@ -52,10 +50,6 @@ export async function PATCH(
       }
       patch.categoryColor = body.categoryColor;
     }
-  }
-  if (body && "categoryLabel" in body) {
-    patch.categoryLabel =
-      body.categoryLabel === null ? null : String(body.categoryLabel).trim().slice(0, 20);
   }
 
   const todo = await update(id, patch);

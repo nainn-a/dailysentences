@@ -77,8 +77,6 @@ export async function POST(request: Request) {
   const parentId = typeof body?.parentId === "string" ? body.parentId : undefined;
   // Category tag — see src/lib/categories.ts for the fixed color palette.
   const categoryColor = typeof body?.categoryColor === "string" ? body.categoryColor : undefined;
-  const categoryLabel =
-    typeof body?.categoryLabel === "string" ? body.categoryLabel.trim().slice(0, 20) : undefined;
 
   if (!DATE_RE.test(date)) {
     return NextResponse.json({ error: "date 형식이 올바르지 않습니다." }, { status: 400 });
@@ -110,7 +108,6 @@ export async function POST(request: Request) {
     imageUrl,
     parentId,
     categoryColor,
-    categoryLabel,
   });
   return NextResponse.json({ todo }, { status: 201 });
 }

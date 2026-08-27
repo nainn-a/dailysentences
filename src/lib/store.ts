@@ -111,7 +111,6 @@ export function create(input: {
   imageUrl?: string;
   parentId?: string;
   categoryColor?: string;
-  categoryLabel?: string;
 }): Promise<TodoDTO> {
   return enqueue(async () => {
     const all = await readAll();
@@ -127,7 +126,6 @@ export function create(input: {
         : {}),
       ...(input.parentId ? { parentId: input.parentId } : {}),
       ...(input.categoryColor ? { categoryColor: input.categoryColor } : {}),
-      ...(input.categoryLabel ? { categoryLabel: input.categoryLabel } : {}),
     };
     all.push(todo);
     await writeAll(all);
@@ -154,7 +152,6 @@ export function update(
     // `null` clears the category (as opposed to `undefined`, which leaves
     // it untouched — same convention PATCH /api/todos/:id uses in its body).
     categoryColor?: string | null;
-    categoryLabel?: string | null;
   },
 ): Promise<TodoDTO | null> {
   return enqueue(async () => {
@@ -168,10 +165,6 @@ export function update(
     if (patch.categoryColor !== undefined) {
       if (patch.categoryColor === null) delete next.categoryColor;
       else next.categoryColor = patch.categoryColor;
-    }
-    if (patch.categoryLabel !== undefined) {
-      if (patch.categoryLabel === null) delete next.categoryLabel;
-      else next.categoryLabel = patch.categoryLabel;
     }
 
     all[idx] = next;

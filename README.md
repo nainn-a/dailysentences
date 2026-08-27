@@ -82,7 +82,7 @@ Vercel 프로젝트 → **Settings → Environment Variables** → `WIDGET_TOKEN
 
 > iOS 위젯은 시스템이 정한 주기(보통 수십 분 간격)로만 자동 새로고침됩니다 — 앱에서 더 자주 갱신하도록 강제할 수 없는 iOS 자체 제약입니다. 위젯을 탭하면 즉시 최신 내용으로 실행됩니다.
 
-`/api/widget?token=...&format=json`으로 요청하면 `{ date, items: [{ time, text, done, categoryColor, categoryLabel }] }` 형태의 JSON도 받을 수 있어, 더 꾸민 위젯을 만들고 싶다면 이 형식을 활용하세요.
+`/api/widget?token=...&format=json`으로 요청하면 `{ date, items: [{ time, text, done, categoryColor, categoryName }] }` 형태의 JSON도 받을 수 있어, 더 꾸민 위젯을 만들고 싶다면 이 형식을 활용하세요.
 
 ### 그 외 호스트 (Render, 개인 서버 등)
 

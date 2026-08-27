@@ -11,6 +11,7 @@ const LONG_PRESS_MS = 500;
 export default function TodoItem({
   todo,
   replies = [],
+  categoryNames = {},
   onDelete,
   onEdit,
   onReply,
@@ -18,8 +19,11 @@ export default function TodoItem({
 }: {
   todo: TodoDTO;
   replies?: TodoDTO[];
+  // Fixed color -> name map from /api/category-names, for the chip shown
+  // next to a categorized memo's text (see src/components/CategoryBrowser).
+  categoryNames?: Record<string, string>;
   onDelete: (id: string) => void;
-  onEdit?: (id: string, text: string, category: { color: string | null; label?: string }) => void;
+  onEdit?: (id: string, text: string, category: { color: string | null }) => void;
   onReply?: (parentId: string, text: string) => Promise<boolean>;
   isReply?: boolean;
 }) {
@@ -33,7 +37,6 @@ export default function TodoItem({
   const [editCategoryColor, setEditCategoryColor] = useState<string | null>(
     todo.categoryColor ?? null,
   );
-  const [editCategoryLabel, setEditCategoryLabel] = useState(todo.categoryLabel ?? "");
   const pressTimerRef = useRef<number | null>(null);
   const longPressFiredRef = useRef(false);
 
@@ -58,17 +61,13 @@ export default function TodoItem({
   function startEdit() {
     setEditText(todo.text);
     setEditCategoryColor(todo.categoryColor ?? null);
-    setEditCategoryLabel(todo.categoryLabel ?? "");
     setEditing(true);
   }
 
   function submitEdit() {
     const trimmed = editText.trim();
     if (trimmed) {
-      onEdit?.(todo.id, trimmed, {
-        color: editCategoryColor,
-        label: editCategoryLabel.trim() || undefined,
-      });
+      onEdit?.(todo.id, trimmed, { color: editCategoryColor });
     }
     setEditing(false);
   }
@@ -186,15 +185,6 @@ export default function TodoItem({
                       style={{ backgroundColor: c.value }}
                     />
                   ))}
-                  {editCategoryColor && (
-                    <input
-                      value={editCategoryLabel}
-                      onChange={(e) => setEditCategoryLabel(e.target.value)}
-                      maxLength={20}
-                      placeholder="카테고리 이름"
-                      className="min-w-0 flex-1 rounded border border-(--color-border) bg-transparent px-2 py-1 text-xs text-(--color-ink) outline-none"
-                    />
-                  )}
                 </div>
               )}
             </form>
@@ -218,9 +208,9 @@ export default function TodoItem({
                 />
               )}
               <span className="min-w-0 flex-1">{todo.text}</span>
-              {todo.categoryLabel && (
+              {todo.categoryColor && categoryNames[todo.categoryColor] && (
                 <span className="shrink-0 rounded-full bg-black/5 px-2 py-0.5 text-[11px] text-(--color-muted)">
-                  {todo.categoryLabel}
+                  {categoryNames[todo.categoryColor]}
                 </span>
               )}
             </button>

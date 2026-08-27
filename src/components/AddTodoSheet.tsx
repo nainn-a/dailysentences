@@ -18,7 +18,7 @@ export default function AddTodoSheet({
     text: string,
     time: string,
     image?: { id: string; url: string },
-    category?: { color: string; label?: string },
+    category?: { color: string },
   ) => void;
 }) {
   const [text, setText] = useState("");
@@ -27,7 +27,6 @@ export default function AddTodoSheet({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [categoryColor, setCategoryColor] = useState<string | null>(null);
-  const [categoryLabel, setCategoryLabel] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Submitting hands the uploaded image off to the memo — skip the
@@ -110,7 +109,7 @@ export default function AddTodoSheet({
       trimmed,
       time,
       image ? { id: image.id, url: image.url } : undefined,
-      categoryColor ? { color: categoryColor, label: categoryLabel.trim() || undefined } : undefined,
+      categoryColor ? { color: categoryColor } : undefined,
     );
   }
 
@@ -169,15 +168,6 @@ export default function AddTodoSheet({
                 style={{ backgroundColor: c.value }}
               />
             ))}
-            {categoryColor && (
-              <input
-                value={categoryLabel}
-                onChange={(e) => setCategoryLabel(e.target.value)}
-                maxLength={20}
-                placeholder="카테고리 이름(선택)"
-                className="min-w-0 flex-1 rounded-lg border border-(--color-border) bg-white px-3 py-1.5 text-xs text-(--color-ink) outline-none focus:border-(--color-accent)"
-              />
-            )}
           </div>
 
           <input

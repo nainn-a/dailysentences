@@ -29,6 +29,7 @@ export default function CalendarApp() {
   const [showAdd, setShowAdd] = useState(false);
   const [filterColor, setFilterColor] = useState<string | null>(null);
   const [view, setView] = useState<ViewMode>("memo");
+  const [categoryNames, setCategoryNames] = useState<Record<string, string>>({});
 
   const weekStart = useMemo(() => startOfWeek(selected), [selected]);
   const selectedKey = toDateKey(selected);
@@ -66,11 +67,21 @@ export default function CalendarApp() {
     loadWeekCounts(weekStart);
   }, [weekStart, loadWeekCounts]);
 
+  useEffect(() => {
+    (async () => {
+      const res = await fetch("/api/category-names");
+      if (res.ok) {
+        const data = await res.json();
+        setCategoryNames(data.names ?? {});
+      }
+    })();
+  }, []);
+
   async function handleAdd(
     text: string,
     time: string,
     image?: { id: string; url: string },
-    category?: { color: string; label?: string },
+    category?: { color: string },
   ) {
     const res = await fetch("/api/todos", {
       method: "POST",
@@ -82,7 +93,6 @@ export default function CalendarApp() {
         imageId: image?.id,
         imageUrl: image?.url,
         categoryColor: category?.color,
-        categoryLabel: category?.label,
       }),
     });
     if (res.ok) {
@@ -93,33 +103,20 @@ export default function CalendarApp() {
     }
   }
 
-  async function handleEdit(
-    id: string,
-    text: string,
-    category: { color: string | null; label?: string },
-  ) {
+  async function handleEdit(id: string, text: string, category: { color: string | null }) {
     setTodos((prev) =>
       prev.map((t) => {
         if (t.id !== id) return t;
         const updated: TodoDTO = { ...t, text };
-        if (category.color) {
-          updated.categoryColor = category.color;
-          updated.categoryLabel = category.label;
-        } else {
-          delete updated.categoryColor;
-          delete updated.categoryLabel;
-        }
+        if (category.color) updated.categoryColor = category.color;
+        else delete updated.categoryColor;
         return updated;
       }),
     );
     await fetch(`/api/todos/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        text,
-        categoryColor: category.color ?? null,
-        categoryLabel: category.color ? (category.label ?? null) : null,
-      }),
+      body: JSON.stringify({ text, categoryColor: category.color ?? null }),
     });
   }
 
@@ -278,6 +275,7 @@ export default function CalendarApp() {
                   key={todo.id}
                   todo={todo}
                   replies={repliesByParent[todo.id] ?? []}
+                  categoryNames={categoryNames}
                   onDelete={handleDelete}
                   onEdit={handleEdit}
                   onReply={handleReply}
