@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ImagePlus, X } from "lucide-react";
 
+import { compressImageIfNeeded } from "@/lib/image-compress";
+import { MAX_IMAGE_BYTES } from "@/lib/image-limits";
 import type { DiaryImage } from "@/lib/types";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -81,18 +83,23 @@ export default function DiaryEditor({
     }
     setError(null);
     setUploading(true);
-    const form = new FormData();
-    form.append("file", file);
-    const res = await fetch("/api/images", { method: "POST", body: form });
-    if (res.ok) {
-      const data = await res.json();
-      const nextImages = [...images, { id: data.image.id, url: data.image.url }];
-      setImages(nextImages);
-      if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
-      await save(date, content, nextImages);
-    } else {
-      const data = await res.json().catch(() => null);
-      setError(data?.error ?? "이미지 업로드에 실패했어요.");
+    try {
+      const upload = await compressImageIfNeeded(file, MAX_IMAGE_BYTES);
+      const form = new FormData();
+      form.append("file", upload);
+      const res = await fetch("/api/images", { method: "POST", body: form });
+      if (res.ok) {
+        const data = await res.json();
+        const nextImages = [...images, { id: data.image.id, url: data.image.url }];
+        setImages(nextImages);
+        if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
+        await save(date, content, nextImages);
+      } else {
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? "이미지 업로드에 실패했어요.");
+      }
+    } catch {
+      setError("이미지 업로드에 실패했어요.");
     }
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";

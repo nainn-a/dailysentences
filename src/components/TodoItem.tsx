@@ -167,24 +167,36 @@ export default function TodoItem({
                   category" simple: a color always belongs to a top-level
                   memo, never to a comment on one. */}
               {!isReply && (
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {CATEGORY_COLORS.map((c) => (
-                    <button
-                      key={c.value}
-                      type="button"
-                      aria-label={c.label}
-                      onClick={() =>
-                        setEditCategoryColor((cur) => (cur === c.value ? null : c.value))
-                      }
-                      className={[
-                        "h-5 w-5 shrink-0 rounded-full transition",
-                        editCategoryColor === c.value
-                          ? "ring-2 ring-(--color-accent) ring-offset-1"
-                          : "",
-                      ].join(" ")}
-                      style={{ backgroundColor: c.value }}
-                    />
-                  ))}
+                <div className="flex flex-col gap-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {CATEGORY_COLORS.map((c) => (
+                      <button
+                        key={c.value}
+                        type="button"
+                        aria-label={categoryNames[c.value] || c.label}
+                        title={categoryNames[c.value] || c.label}
+                        onClick={() =>
+                          setEditCategoryColor((cur) => (cur === c.value ? null : c.value))
+                        }
+                        className={[
+                          "h-5 w-5 shrink-0 rounded-full transition",
+                          editCategoryColor === c.value
+                            ? "ring-2 ring-(--color-accent) ring-offset-1"
+                            : "",
+                        ].join(" ")}
+                        style={{ backgroundColor: c.value }}
+                      />
+                    ))}
+                  </div>
+                  {editCategoryColor && (
+                    <p className="text-[11px] text-(--color-muted)">
+                      선택된 카테고리:{" "}
+                      <span className="font-medium text-(--color-ink)">
+                        {categoryNames[editCategoryColor] ||
+                          CATEGORY_COLORS.find((c) => c.value === editCategoryColor)?.label}
+                      </span>
+                    </p>
+                  )}
                 </div>
               )}
             </form>

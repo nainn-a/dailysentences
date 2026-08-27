@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { del, list, put } from "@vercel/blob";
 
 import type { ImageDTO } from "@/lib/types";
+import { MAX_IMAGE_BYTES } from "@/lib/image-limits";
 
 // Storage backend picks itself automatically, same pattern as store.ts:
 //  - Vercel Blob when BLOB_READ_WRITE_TOKEN is present — this is what you
@@ -17,7 +18,7 @@ import type { ImageDTO } from "@/lib/types";
 const BLOB_PREFIX = "dailysentences-images/";
 const DATA_DIR = path.join(process.cwd(), "data", "images");
 
-export const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // stays well under Vercel's ~4.5MB serverless request-body cap
+export { MAX_IMAGE_BYTES };
 
 function hasBlob(): boolean {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN);

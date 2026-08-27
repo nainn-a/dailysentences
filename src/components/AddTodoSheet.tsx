@@ -5,6 +5,8 @@ import { ClipboardPaste, ImagePlus, X } from "lucide-react";
 
 import { CATEGORY_COLORS } from "@/lib/categories";
 import { formatNowTime } from "@/lib/date";
+import { compressImageIfNeeded } from "@/lib/image-compress";
+import { MAX_IMAGE_BYTES } from "@/lib/image-limits";
 import type { ImageDTO } from "@/lib/types";
 
 export default function AddTodoSheet({
@@ -27,6 +29,7 @@ export default function AddTodoSheet({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [categoryColor, setCategoryColor] = useState<string | null>(null);
+  const [categoryNames, setCategoryNames] = useState<Record<string, string>>({});
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Submitting hands the uploaded image off to the memo — skip the
@@ -44,9 +47,19 @@ export default function AddTodoSheet({
 
   useEffect(() => {
     if (!error) return;
-    const timer = window.setTimeout(() => setError(null), 2400);
+    const timer = window.setTimeout(() => setError(null), 4000);
     return () => window.clearTimeout(timer);
   }, [error]);
+
+  useEffect(() => {
+    (async () => {
+      const res = await fetch("/api/category-names");
+      if (res.ok) {
+        const data = await res.json();
+        setCategoryNames(data.names ?? {});
+      }
+    })();
+  }, []);
 
   // Closing (Escape, backdrop tap, 취소) without submitting shouldn't leave
   // an orphaned upload sitting in storage.
@@ -69,15 +82,20 @@ export default function AddTodoSheet({
 
     setError(null);
     setUploading(true);
-    const form = new FormData();
-    form.append("file", file);
-    const res = await fetch("/api/images", { method: "POST", body: form });
-    if (res.ok) {
-      const data = await res.json();
-      setImage(data.image);
-    } else {
-      const data = await res.json().catch(() => null);
-      setError(data?.error ?? "이미지 업로드에 실패했어요.");
+    try {
+      const upload = await compressImageIfNeeded(file, MAX_IMAGE_BYTES);
+      const form = new FormData();
+      form.append("file", upload);
+      const res = await fetch("/api/images", { method: "POST", body: form });
+      if (res.ok) {
+        const data = await res.json();
+        setImage(data.image);
+      } else {
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? "이미지 업로드에 실패했어요.");
+      }
+    } catch {
+      setError("이미지 업로드에 실패했어요.");
     }
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -179,20 +197,32 @@ export default function AddTodoSheet({
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {CATEGORY_COLORS.map((c) => (
-              <button
-                key={c.value}
-                type="button"
-                aria-label={c.label}
-                onClick={() => setCategoryColor((cur) => (cur === c.value ? null : c.value))}
-                className={[
-                  "h-6 w-6 shrink-0 rounded-full transition",
-                  categoryColor === c.value ? "ring-2 ring-(--color-accent) ring-offset-2" : "",
-                ].join(" ")}
-                style={{ backgroundColor: c.value }}
-              />
-            ))}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              {CATEGORY_COLORS.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  aria-label={categoryNames[c.value] || c.label}
+                  title={categoryNames[c.value] || c.label}
+                  onClick={() => setCategoryColor((cur) => (cur === c.value ? null : c.value))}
+                  className={[
+                    "h-6 w-6 shrink-0 rounded-full transition",
+                    categoryColor === c.value ? "ring-2 ring-(--color-accent) ring-offset-2" : "",
+                  ].join(" ")}
+                  style={{ backgroundColor: c.value }}
+                />
+              ))}
+            </div>
+            {categoryColor && (
+              <p className="text-xs text-(--color-muted)">
+                선택된 카테고리:{" "}
+                <span className="font-medium text-(--color-ink)">
+                  {categoryNames[categoryColor] ||
+                    CATEGORY_COLORS.find((c) => c.value === categoryColor)?.label}
+                </span>
+              </p>
+            )}
           </div>
 
           <input

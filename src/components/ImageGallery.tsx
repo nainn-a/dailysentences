@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ClipboardPaste, LogOut, Plus } from "lucide-react";
 
+import { compressImageIfNeeded } from "@/lib/image-compress";
+import { MAX_IMAGE_BYTES } from "@/lib/image-limits";
 import type { ImageDTO } from "@/lib/types";
 
 export default function ImageGallery() {
@@ -32,7 +34,7 @@ export default function ImageGallery() {
 
   useEffect(() => {
     if (!error) return;
-    const timer = window.setTimeout(() => setError(null), 2400);
+    const timer = window.setTimeout(() => setError(null), 4000);
     return () => window.clearTimeout(timer);
   }, [error]);
 
@@ -40,19 +42,24 @@ export default function ImageGallery() {
     async (files: FileList | File[] | null) => {
       if (!files || files.length === 0) return;
       setUploading(true);
-      for (const file of Array.from(files)) {
-        if (!file.type.startsWith("image/")) {
-          setError("이미지 파일만 업로드할 수 있어요.");
-          continue;
+      try {
+        for (const file of Array.from(files)) {
+          if (!file.type.startsWith("image/")) {
+            setError("이미지 파일만 업로드할 수 있어요.");
+            continue;
+          }
+          const upload = await compressImageIfNeeded(file, MAX_IMAGE_BYTES);
+          const form = new FormData();
+          form.append("file", upload);
+          const res = await fetch("/api/images", { method: "POST", body: form });
+          if (!res.ok) {
+            const data = await res.json().catch(() => null);
+            setError(data?.error ?? "업로드에 실패했어요.");
+            break;
+          }
         }
-        const form = new FormData();
-        form.append("file", file);
-        const res = await fetch("/api/images", { method: "POST", body: form });
-        if (!res.ok) {
-          const data = await res.json().catch(() => null);
-          setError(data?.error ?? "업로드에 실패했어요.");
-          break;
-        }
+      } catch {
+        setError("업로드에 실패했어요.");
       }
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
