@@ -4,6 +4,7 @@
 
 - 주간 날짜 스트립(월~일)에서 날짜를 선택
 - 선택한 날짜에 시간이 찍힌 메모/할 일 카드를 추가·완료 표시·삭제
+- 실수로 삭제해도 삭제 직후 뜨는 "되돌리기"로 즉시 복구하거나, 캘린더 화면 상단 **휴지통** 아이콘에서 7일 이내 삭제한 메모를 언제든 복구 가능
 - 메모가 있는 날짜는 점(●)으로 표시
 - **이미지** 탭에서 사진을 업로드하고 그리드로 모아보기(클릭하면 크게 보기 + 삭제)
 - 메모에 6가지 색상 중 하나로 **카테고리** 태그를 붙일 수 있음(추가·수정 시 색상 원 클릭), 색상 칩으로 그 날짜의 메모를 필터링해서 보기
@@ -114,11 +115,11 @@ src/
     image/                # 이미지 업로드/갤러리 화면
     api/login/           # 비밀번호 확인 + 로그인 쿠키 발급
     api/logout/           # 로그인 쿠키 삭제
-    api/todos/              # 메모 CRUD API
+    api/todos/              # 메모 CRUD API (todos/trash: 휴지통 조회/복구)
     api/images/              # 이미지 업로드/목록/삭제 API
     api/diary/                # 일기 조회/저장 API
     api/widget/                 # 단축어 위젯용 토큰 인증 조회 API
-  components/            # AppShell, CalendarApp, CategoryBrowser, DiaryEditor, ImageGallery, WeekStrip, TodoItem, AddTodoSheet, NavRail 등
+  components/            # AppShell, CalendarApp, CategoryBrowser, DiaryEditor, ImageGallery, TrashSheet, WeekStrip, TodoItem, AddTodoSheet, NavRail 등
   lib/
     auth-cookie.ts          # 비밀번호 확인 + 쿠키 서명/검증
     store.ts                 # 메모 저장 (Redis 연결돼 있으면 Redis, 아니면 data/todos.json)

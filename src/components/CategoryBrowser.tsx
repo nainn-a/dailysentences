@@ -1,13 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, LogOut, Pencil, X } from "lucide-react";
+import { Check, LogOut, Pencil, RotateCcw, X } from "lucide-react";
 
 import { CATEGORY_COLORS } from "@/lib/categories";
 import { formatHeaderDate, formatNowTime, fromDateKey } from "@/lib/date";
 import type { TodoDTO } from "@/lib/types";
 import TodoItem from "@/components/TodoItem";
+
+const UNDO_TIMEOUT_MS = 6000;
 
 export default function CategoryBrowser() {
   const router = useRouter();
@@ -17,6 +19,14 @@ export default function CategoryBrowser() {
   const [names, setNames] = useState<Record<string, string>>({});
   const [renamingColor, setRenamingColor] = useState<string | null>(null);
   const [renameText, setRenameText] = useState("");
+  const [undo, setUndo] = useState<{ id: string; label: string } | null>(null);
+  const undoTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (undoTimerRef.current !== null) window.clearTimeout(undoTimerRef.current);
+    };
+  }, []);
 
   const load = useCallback(async (c: string) => {
     setLoading(true);
@@ -67,8 +77,27 @@ export default function CategoryBrowser() {
   }
 
   async function handleDelete(id: string) {
+    const removed = todos.find((t) => t.id === id);
     setTodos((prev) => prev.filter((t) => t.id !== id && t.parentId !== id));
     await fetch(`/api/todos/${id}`, { method: "DELETE" });
+
+    if (undoTimerRef.current !== null) window.clearTimeout(undoTimerRef.current);
+    const label = removed ? (removed.text.length > 24 ? `${removed.text.slice(0, 24)}…` : removed.text) : "메모";
+    setUndo({ id, label });
+    undoTimerRef.current = window.setTimeout(() => setUndo(null), UNDO_TIMEOUT_MS);
+  }
+
+  async function handleUndo() {
+    if (!undo || !color) return;
+    const id = undo.id;
+    setUndo(null);
+    if (undoTimerRef.current !== null) window.clearTimeout(undoTimerRef.current);
+    const res = await fetch("/api/todos/trash", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (res.ok) await load(color);
   }
 
   async function handleEdit(id: string, text: string, category: { color: string | null }) {
@@ -260,6 +289,20 @@ export default function CategoryBrowser() {
           )}
         </div>
       </main>
+
+      {undo && (
+        <div className="fixed bottom-8 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full bg-black/80 py-2 pl-4 pr-2 text-xs text-white">
+          <span className="max-w-[50vw] truncate">&ldquo;{undo.label}&rdquo; 삭제됨</span>
+          <button
+            type="button"
+            onClick={handleUndo}
+            className="flex shrink-0 items-center gap-1 rounded-full bg-white/15 px-3 py-1.5 font-semibold transition hover:bg-white/25"
+          >
+            <RotateCcw className="h-3 w-3" />
+            되돌리기
+          </button>
+        </div>
+      )}
     </>
   );
 }

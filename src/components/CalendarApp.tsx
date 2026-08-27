@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, Plus } from "lucide-react";
+import { LogOut, Plus, RotateCcw, Trash2 } from "lucide-react";
 
 import {
   addDays,
@@ -17,6 +17,9 @@ import WeekStrip from "@/components/WeekStrip";
 import TodoItem from "@/components/TodoItem";
 import AddTodoSheet from "@/components/AddTodoSheet";
 import DiaryEditor from "@/components/DiaryEditor";
+import TrashSheet from "@/components/TrashSheet";
+
+const UNDO_TIMEOUT_MS = 6000;
 
 type ViewMode = "memo" | "diary";
 
@@ -30,6 +33,9 @@ export default function CalendarApp() {
   const [filterColor, setFilterColor] = useState<string | null>(null);
   const [view, setView] = useState<ViewMode>("memo");
   const [categoryNames, setCategoryNames] = useState<Record<string, string>>({});
+  const [showTrash, setShowTrash] = useState(false);
+  const [undo, setUndo] = useState<{ id: string; label: string } | null>(null);
+  const undoTimerRef = useRef<number | null>(null);
 
   const weekStart = useMemo(() => startOfWeek(selected), [selected]);
   const selectedKey = toDateKey(selected);
@@ -75,6 +81,12 @@ export default function CalendarApp() {
         setCategoryNames(data.names ?? {});
       }
     })();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (undoTimerRef.current !== null) window.clearTimeout(undoTimerRef.current);
+    };
   }, []);
 
   async function handleAdd(
@@ -123,6 +135,7 @@ export default function CalendarApp() {
   async function handleDelete(id: string) {
     // Deleting a memo takes its replies down with it — mirror that locally
     // so the count and list stay in sync with the server-side cascade.
+    const removed = todos.find((t) => t.id === id);
     const removedCount = todos.filter((t) => t.id === id || t.parentId === id).length;
     setTodos((prev) => prev.filter((t) => t.id !== id && t.parentId !== id));
     setCounts((prev) => ({
@@ -130,6 +143,29 @@ export default function CalendarApp() {
       [selectedKey]: Math.max(0, (prev[selectedKey] ?? removedCount) - removedCount),
     }));
     await fetch(`/api/todos/${id}`, { method: "DELETE" });
+
+    // The delete is a soft delete server-side (see store.ts) — this just
+    // surfaces an "실행취소" window for the common case of noticing right
+    // away (e.g. an accidental long-press). 휴지통 covers noticing later.
+    if (undoTimerRef.current !== null) window.clearTimeout(undoTimerRef.current);
+    const label = removed ? (removed.text.length > 24 ? `${removed.text.slice(0, 24)}…` : removed.text) : "메모";
+    setUndo({ id, label });
+    undoTimerRef.current = window.setTimeout(() => setUndo(null), UNDO_TIMEOUT_MS);
+  }
+
+  async function handleUndo() {
+    if (!undo) return;
+    const id = undo.id;
+    setUndo(null);
+    if (undoTimerRef.current !== null) window.clearTimeout(undoTimerRef.current);
+    const res = await fetch("/api/todos/trash", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (res.ok) {
+      await Promise.all([loadDayTodos(selectedKey), loadWeekCounts(weekStart)]);
+    }
   }
 
   async function handleReply(parentId: string, text: string): Promise<boolean> {
@@ -176,6 +212,14 @@ export default function CalendarApp() {
       <header className="glass flex items-center justify-between border-b border-(--color-border) bg-(--color-surface) px-4 py-4 sm:px-6">
         <h1 className="text-xl font-semibold text-(--color-ink)">{headerDate}</h1>
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowTrash(true)}
+            aria-label="휴지통"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-(--color-muted) transition hover:bg-black/5"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
           <button
             type="button"
             onClick={handleLogout}
@@ -302,6 +346,30 @@ export default function CalendarApp() {
           onClose={() => setShowAdd(false)}
           onSubmit={handleAdd}
         />
+      )}
+
+      {showTrash && (
+        <TrashSheet
+          onClose={() => setShowTrash(false)}
+          onRestored={() => {
+            loadDayTodos(selectedKey);
+            loadWeekCounts(weekStart);
+          }}
+        />
+      )}
+
+      {undo && (
+        <div className="fixed bottom-24 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full bg-black/80 py-2 pl-4 pr-2 text-xs text-white md:bottom-8">
+          <span className="max-w-[50vw] truncate">&ldquo;{undo.label}&rdquo; 삭제됨</span>
+          <button
+            type="button"
+            onClick={handleUndo}
+            className="flex shrink-0 items-center gap-1 rounded-full bg-white/15 px-3 py-1.5 font-semibold transition hover:bg-white/25"
+          >
+            <RotateCcw className="h-3 w-3" />
+            되돌리기
+          </button>
+        </div>
       )}
     </>
   );
