@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, Plus } from "lucide-react";
+import { ClipboardPaste, LogOut, Plus } from "lucide-react";
 
 import type { ImageDTO } from "@/lib/types";
 
@@ -75,6 +75,30 @@ export default function ImageGallery() {
     return () => window.removeEventListener("paste", onPaste);
   }, [handleFiles]);
 
+  // Ctrl+V above only fires while something on the page is editable/focused
+  // — this screen has no text field, so on mobile there's nothing to
+  // long-press for the OS "붙여넣기" menu. This button reads the clipboard
+  // directly on tap instead, which works on both desktop and mobile.
+  async function pasteFromClipboard() {
+    if (!navigator.clipboard?.read) {
+      setError("이 브라우저에서는 지원하지 않아요. + 버튼을 이용해주세요.");
+      return;
+    }
+    try {
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        const type = item.types.find((t) => t.startsWith("image/"));
+        if (!type) continue;
+        const blob = await item.getType(type);
+        await handleFiles([new File([blob], "clipboard-image", { type })]);
+        return;
+      }
+      setError("클립보드에 복사된 사진이 없어요.");
+    } catch {
+      setError("클립보드를 읽을 수 없었어요. 사진을 다시 복사해보세요.");
+    }
+  }
+
   async function handleDelete(id: string) {
     setPreview(null);
     setImages((prev) => prev.filter((img) => img.id !== id));
@@ -111,7 +135,7 @@ export default function ImageGallery() {
           <div className="mt-16 flex flex-col items-center gap-2 text-center">
             <p className="text-sm text-(--color-muted)">아직 업로드한 이미지가 없어요.</p>
             <p className="text-xs text-(--color-muted)">
-              오른쪽 아래 + 버튼으로 추가하거나, 복사한 사진을 붙여넣기(Ctrl+V)해보세요.
+              오른쪽 아래 + 버튼으로 추가하거나, 붙여넣기 버튼으로 복사한 사진을 올려보세요.
             </p>
           </div>
         ) : (
@@ -139,16 +163,27 @@ export default function ImageGallery() {
           onChange={(e) => handleFiles(e.target.files)}
         />
 
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          aria-label="이미지 업로드"
-          style={{ backgroundImage: "var(--gradient-accent)" }}
-          className="fixed bottom-24 right-5 flex h-14 w-14 items-center justify-center rounded-full text-(--color-accent-ink) shadow-lg transition hover:brightness-105 active:scale-95 disabled:opacity-50 md:bottom-8 md:right-8"
-        >
-          <Plus className="h-6 w-6" />
-        </button>
+        <div className="fixed bottom-24 right-5 flex flex-col items-end gap-3 md:bottom-8 md:right-8">
+          <button
+            type="button"
+            onClick={pasteFromClipboard}
+            disabled={uploading}
+            aria-label="클립보드에서 붙여넣기"
+            className="glass flex h-11 w-11 items-center justify-center rounded-full bg-(--color-surface-strong) text-(--color-ink) shadow-lg transition hover:brightness-105 active:scale-95 disabled:opacity-50"
+          >
+            <ClipboardPaste className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            aria-label="이미지 업로드"
+            style={{ backgroundImage: "var(--gradient-accent)" }}
+            className="flex h-14 w-14 items-center justify-center rounded-full text-(--color-accent-ink) shadow-lg transition hover:brightness-105 active:scale-95 disabled:opacity-50"
+          >
+            <Plus className="h-6 w-6" />
+          </button>
+        </div>
 
         {(error || uploading) && (
           <div className="fixed bottom-24 left-1/2 -translate-x-1/2 rounded-full bg-black/80 px-4 py-2 text-xs text-white md:bottom-8">

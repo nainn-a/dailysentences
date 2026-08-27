@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ImagePlus, X } from "lucide-react";
+import { ClipboardPaste, ImagePlus, X } from "lucide-react";
 
 import { CATEGORY_COLORS } from "@/lib/categories";
 import { formatNowTime } from "@/lib/date";
@@ -90,6 +90,31 @@ export default function AddTodoSheet({
     if (!file) return;
     e.preventDefault();
     handleFile(file);
+  }
+
+  // Ctrl+V only fires a paste event while a text field has focus, so on
+  // mobile (no keyboard shortcut, and this sheet has nothing to long-press
+  // for the OS "붙여넣기" menu outside the text input) it often never
+  // triggers. This button reads the clipboard directly on tap instead.
+  async function pasteFromClipboard() {
+    if (image || uploading) return;
+    if (!navigator.clipboard?.read) {
+      setError("이 브라우저에서는 지원하지 않아요. 사진 추가 버튼을 이용해주세요.");
+      return;
+    }
+    try {
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        const type = item.types.find((t) => t.startsWith("image/"));
+        if (!type) continue;
+        const blob = await item.getType(type);
+        await handleFile(new File([blob], "clipboard-image", { type }));
+        return;
+      }
+      setError("클립보드에 복사된 사진이 없어요.");
+    } catch {
+      setError("클립보드를 읽을 수 없었어요. 사진을 다시 복사해보세요.");
+    }
   }
 
   async function handleRemoveImage() {
@@ -196,15 +221,26 @@ export default function AddTodoSheet({
               </button>
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="flex w-fit items-center gap-1.5 rounded-lg border border-dashed border-(--color-border) px-3 py-1.5 text-xs font-medium text-(--color-muted) transition hover:border-(--color-accent) hover:text-(--color-accent-dark) disabled:opacity-50"
-            >
-              <ImagePlus className="h-3.5 w-3.5" />
-              {uploading ? "업로드 중…" : "사진 추가 (붙여넣기 가능)"}
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex w-fit items-center gap-1.5 rounded-lg border border-dashed border-(--color-border) px-3 py-1.5 text-xs font-medium text-(--color-muted) transition hover:border-(--color-accent) hover:text-(--color-accent-dark) disabled:opacity-50"
+              >
+                <ImagePlus className="h-3.5 w-3.5" />
+                {uploading ? "업로드 중…" : "사진 추가"}
+              </button>
+              <button
+                type="button"
+                onClick={pasteFromClipboard}
+                disabled={uploading}
+                className="flex w-fit items-center gap-1.5 rounded-lg border border-dashed border-(--color-border) px-3 py-1.5 text-xs font-medium text-(--color-muted) transition hover:border-(--color-accent) hover:text-(--color-accent-dark) disabled:opacity-50"
+              >
+                <ClipboardPaste className="h-3.5 w-3.5" />
+                붙여넣기
+              </button>
+            </div>
           )}
 
           {error && <p className="text-xs text-red-500">{error}</p>}
