@@ -2,10 +2,16 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 
-const suit = localFont({
-  src: "../fonts/SUIT-Variable.woff2",
+// Times New Roman leads the stack for Latin glyphs (it has no Hangul, so
+// the browser falls through to Freesentation for Korean text automatically
+// — no need to split the two scripts by hand).
+const freesentation = localFont({
+  src: [
+    { path: "../fonts/Freesentation-4Regular.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/Freesentation-5Medium.woff2", weight: "500", style: "normal" },
+    { path: "../fonts/Freesentation-6SemiBold.woff2", weight: "600", style: "normal" },
+  ],
   variable: "--font-sans",
-  weight: "100 900",
   display: "swap",
 });
 
@@ -23,7 +29,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ko" className={`${suit.variable} h-full antialiased`}>
+    <html lang="ko" className={`${freesentation.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col text-(--color-ink)">
         {children}
       </body>

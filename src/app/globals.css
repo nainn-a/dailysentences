@@ -31,7 +31,14 @@
 }
 
 body {
-  font-family: var(--font-sans), "SUIT Variable", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  /* "Times New Roman" leads for Latin text; it has no Hangul glyphs, so
+     Korean text falls through to Freesentation (var(--font-sans)). */
+  font-family:
+    "Times New Roman",
+    var(--font-sans),
+    "Apple SD Gothic Neo",
+    "Malgun Gothic",
+    serif;
   background-color: var(--color-app-bg);
   background-image:
     radial-gradient(circle at 18% 15%, rgb(255 255 255 / 85%), transparent 42%),

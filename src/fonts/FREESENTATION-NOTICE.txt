@@ -1,0 +1,8 @@
+Freesentation
+
+Font: Freesentation (weights 400/500/600 used here)
+Source: https://freesentation.blog/ (listed as free-for-commercial-use on
+noonnu.cc, a directory of Korean fonts cleared for commercial embedding)
+Mirror used to fetch these files: https://github.com/vlogcloud/freesentationFont
+
+Bundled here as static woff2 files loaded via next/font/local.
