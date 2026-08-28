@@ -143,7 +143,7 @@ export default function DiaryEditor({
             value={content}
             onChange={(e) => handleContentChange(e.target.value)}
             onPaste={handlePaste}
-            placeholder="오늘 하루는 어땠나요? 편하게 적어보세요…"
+            placeholder="오늘 하루 어땠어?"
             className="glass min-h-[50vh] w-full resize-y rounded-2xl border border-(--color-border) bg-(--color-pill) p-4 text-[15px] leading-relaxed text-(--color-ink) outline-none focus:border-(--color-accent)"
           />
 

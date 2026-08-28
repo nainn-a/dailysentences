@@ -45,10 +45,7 @@ function LoginForm() {
         >
           D
         </div>
-        <h1 className="text-2xl font-semibold text-(--color-ink)">Daily Sentences</h1>
-        <p className="max-w-xs text-sm leading-relaxed text-(--color-muted)">
-          비밀번호를 입력하고 시작해보세요.
-        </p>
+        <h1 className="text-2xl font-semibold text-(--color-ink)">DAILY SENTENCES</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="flex w-full max-w-xs flex-col gap-3">
