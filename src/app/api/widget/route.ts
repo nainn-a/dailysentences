@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { timingSafeEqual } from "@/lib/auth-cookie";
 import { emojiForCategoryColor } from "@/lib/categories";
-import { getCategoryNames } from "@/lib/category-name-store";
+import { getCategories } from "@/lib/categories-store";
 import { fromDateKey, formatHeaderDate, toDateKey } from "@/lib/date";
 import { listByDate } from "@/lib/store";
 
@@ -46,7 +46,7 @@ export async function GET(request: Request) {
 
   const format = searchParams.get("format") === "json" ? "json" : "text";
   if (format === "json") {
-    const categoryNames = await getCategoryNames();
+    const categories = await getCategories();
     return NextResponse.json({
       date,
       items: todos.map((t) => ({
@@ -54,7 +54,9 @@ export async function GET(request: Request) {
         text: t.text,
         done: t.done,
         categoryColor: t.categoryColor ?? null,
-        categoryName: t.categoryColor ? (categoryNames[t.categoryColor] ?? null) : null,
+        categoryName: t.categoryColor
+          ? (categories.find((c) => c.color === t.categoryColor)?.name ?? null)
+          : null,
       })),
     });
   }

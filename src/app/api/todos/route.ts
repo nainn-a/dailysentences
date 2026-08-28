@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { AUTH_COOKIE_NAME, isValidAuthCookieValue } from "@/lib/auth-cookie";
-import { isKnownCategoryColor } from "@/lib/categories";
+import { isKnownCategoryColor } from "@/lib/categories-store";
 import { countsBetween, create, findTopLevel, listByCategory, listByDate } from "@/lib/store";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
   }
 
   if (category) {
-    if (!isKnownCategoryColor(category)) {
+    if (!(await isKnownCategoryColor(category))) {
       return NextResponse.json({ error: "지원하지 않는 카테고리 색상입니다." }, { status: 400 });
     }
     const todos = await listByCategory(category);
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
   const imageUrl = typeof body?.imageUrl === "string" ? body.imageUrl : undefined;
   // Set when this is a reply to another memo — see TodoItem's reply composer.
   const parentId = typeof body?.parentId === "string" ? body.parentId : undefined;
-  // Category tag — see src/lib/categories.ts for the fixed color palette.
+  // Category tag — see src/lib/categories-store.ts for the user's color list.
   const categoryColor = typeof body?.categoryColor === "string" ? body.categoryColor : undefined;
 
   if (!DATE_RE.test(date)) {
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
       { status: 404 },
     );
   }
-  if (categoryColor && !isKnownCategoryColor(categoryColor)) {
+  if (categoryColor && !(await isKnownCategoryColor(categoryColor))) {
     return NextResponse.json({ error: "지원하지 않는 카테고리 색상입니다." }, { status: 400 });
   }
 

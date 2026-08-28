@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { AUTH_COOKIE_NAME, isValidAuthCookieValue } from "@/lib/auth-cookie";
-import { isKnownCategoryColor } from "@/lib/categories";
+import { isKnownCategoryColor } from "@/lib/categories-store";
 import { remove, update } from "@/lib/store";
 
 async function requireAuth() {
@@ -42,7 +42,7 @@ export async function PATCH(
     if (body.categoryColor === null) {
       patch.categoryColor = null;
     } else if (typeof body.categoryColor === "string") {
-      if (!isKnownCategoryColor(body.categoryColor)) {
+      if (!(await isKnownCategoryColor(body.categoryColor))) {
         return NextResponse.json(
           { error: "지원하지 않는 카테고리 색상입니다." },
           { status: 400 },

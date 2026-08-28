@@ -43,12 +43,10 @@ function LoginForm() {
           style={{ backgroundImage: "var(--gradient-accent)" }}
           className="flex h-16 w-16 items-center justify-center rounded-2xl text-3xl font-semibold text-(--color-accent-ink) shadow-sm"
         >
-          날
+          D
         </div>
-        <h1 className="text-2xl font-semibold text-(--color-ink)">날짜메모</h1>
+        <h1 className="text-2xl font-semibold text-(--color-ink)">Daily Sentences</h1>
         <p className="max-w-xs text-sm leading-relaxed text-(--color-muted)">
-          날짜별로 할 일과 메모를 남기는 캘린더 앱이에요.
-          <br />
           비밀번호를 입력하고 시작해보세요.
         </p>
       </div>

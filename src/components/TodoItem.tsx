@@ -3,27 +3,32 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, CornerDownRight, Pencil, X } from "lucide-react";
 
-import { CATEGORY_COLORS } from "@/lib/categories";
+import type { Category } from "@/lib/categories";
 import type { TodoDTO } from "@/lib/types";
 
 const LONG_PRESS_MS = 500;
+// A second tap inside this window counts as a double-click; past it, the
+// first tap's delayed edit fires on its own.
+const DOUBLE_CLICK_MS = 300;
 
 export default function TodoItem({
   todo,
   replies = [],
-  categoryNames = {},
+  categories = [],
   onDelete,
   onEdit,
+  onToggleDone,
   onReply,
   isReply = false,
 }: {
   todo: TodoDTO;
   replies?: TodoDTO[];
-  // Fixed color -> name map from /api/category-names, for the chip shown
-  // next to a categorized memo's text (see src/components/CategoryBrowser).
-  categoryNames?: Record<string, string>;
+  // The user's full category list ({ color, name }), for the swatch picker
+  // and the name chip shown next to a categorized memo's text.
+  categories?: Category[];
   onDelete: (id: string) => void;
   onEdit?: (id: string, text: string, category: { color: string | null }) => void;
+  onToggleDone?: (id: string) => void;
   onReply?: (parentId: string, text: string) => Promise<boolean>;
   isReply?: boolean;
 }) {
@@ -39,10 +44,12 @@ export default function TodoItem({
   );
   const pressTimerRef = useRef<number | null>(null);
   const longPressFiredRef = useRef(false);
+  const clickTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
       if (pressTimerRef.current !== null) window.clearTimeout(pressTimerRef.current);
+      if (clickTimerRef.current !== null) window.clearTimeout(clickTimerRef.current);
     };
   }, []);
 
@@ -79,9 +86,6 @@ export default function TodoItem({
     }
   }
 
-  // Tap the memo to edit it; press and hold to delete it — no more
-  // click-to-toggle-done (that "middle line" strikethrough tap surprised
-  // people on mobile, where there's no hover to warn them what a tap does).
   function handlePressStart() {
     longPressFiredRef.current = false;
     clearPressTimer();
@@ -96,13 +100,25 @@ export default function TodoItem({
     clearPressTimer();
   }
 
+  // One tap edits; two quick taps toggle the strikethrough (done) instead —
+  // held apart by a short delay so the second tap has a chance to arrive.
+  // Press-and-hold (above) still deletes, and wins over both if it fires.
   function handlePillClick() {
     if (longPressFiredRef.current) {
       // Swallow the click that follows a long-press delete.
       longPressFiredRef.current = false;
       return;
     }
-    startEdit();
+    if (clickTimerRef.current !== null) {
+      window.clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+      onToggleDone?.(todo.id);
+      return;
+    }
+    clickTimerRef.current = window.setTimeout(() => {
+      clickTimerRef.current = null;
+      startEdit();
+    }, DOUBLE_CLICK_MS);
   }
 
   return (
@@ -169,22 +185,22 @@ export default function TodoItem({
               {!isReply && (
                 <div className="flex flex-col gap-1">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    {CATEGORY_COLORS.map((c) => (
+                    {categories.map((c) => (
                       <button
-                        key={c.value}
+                        key={c.color}
                         type="button"
-                        aria-label={categoryNames[c.value] || c.label}
-                        title={categoryNames[c.value] || c.label}
+                        aria-label={c.name}
+                        title={c.name}
                         onClick={() =>
-                          setEditCategoryColor((cur) => (cur === c.value ? null : c.value))
+                          setEditCategoryColor((cur) => (cur === c.color ? null : c.color))
                         }
                         className={[
                           "h-5 w-5 shrink-0 rounded-full transition",
-                          editCategoryColor === c.value
+                          editCategoryColor === c.color
                             ? "ring-2 ring-(--color-accent) ring-offset-1"
                             : "",
                         ].join(" ")}
-                        style={{ backgroundColor: c.value }}
+                        style={{ backgroundColor: c.color }}
                       />
                     ))}
                   </div>
@@ -192,8 +208,8 @@ export default function TodoItem({
                     <p className="text-[11px] text-(--color-muted)">
                       선택된 카테고리:{" "}
                       <span className="font-medium text-(--color-ink)">
-                        {categoryNames[editCategoryColor] ||
-                          CATEGORY_COLORS.find((c) => c.value === editCategoryColor)?.label}
+                        {categories.find((c) => c.color === editCategoryColor)?.name ??
+                          editCategoryColor}
                       </span>
                     </p>
                   )}
@@ -219,12 +235,23 @@ export default function TodoItem({
                   style={{ backgroundColor: todo.categoryColor }}
                 />
               )}
-              <span className="min-w-0 flex-1">{todo.text}</span>
-              {todo.categoryColor && categoryNames[todo.categoryColor] && (
-                <span className="shrink-0 rounded-full bg-black/5 px-2 py-0.5 text-[11px] text-(--color-muted)">
-                  {categoryNames[todo.categoryColor]}
-                </span>
-              )}
+              <span
+                className={[
+                  "min-w-0 flex-1",
+                  todo.done ? "text-(--color-muted) line-through" : "",
+                ].join(" ")}
+              >
+                {todo.text}
+              </span>
+              {todo.categoryColor &&
+                (() => {
+                  const name = categories.find((c) => c.color === todo.categoryColor)?.name;
+                  return name ? (
+                    <span className="shrink-0 rounded-full bg-black/5 px-2 py-0.5 text-[11px] text-(--color-muted)">
+                      {name}
+                    </span>
+                  ) : null;
+                })()}
             </button>
           )}
         </div>
@@ -307,6 +334,7 @@ export default function TodoItem({
               todo={reply}
               onDelete={onDelete}
               onEdit={onEdit}
+              onToggleDone={onToggleDone}
               isReply
             />
           ))}

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ClipboardPaste, ImagePlus, X } from "lucide-react";
+import { ClipboardPaste, ImagePlus, Plus, X } from "lucide-react";
 
-import { CATEGORY_COLORS } from "@/lib/categories";
+import { randomPastelColor, type Category } from "@/lib/categories";
 import { formatNowTime } from "@/lib/date";
 import { compressImageIfNeeded } from "@/lib/image-compress";
 import { MAX_IMAGE_BYTES } from "@/lib/image-limits";
@@ -29,7 +29,10 @@ export default function AddTodoSheet({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [categoryColor, setCategoryColor] = useState<string | null>(null);
-  const [categoryNames, setCategoryNames] = useState<Record<string, string>>({});
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [newCategoryColor, setNewCategoryColor] = useState(randomPastelColor);
+  const [newCategoryName, setNewCategoryName] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Submitting hands the uploaded image off to the memo — skip the
@@ -53,13 +56,33 @@ export default function AddTodoSheet({
 
   useEffect(() => {
     (async () => {
-      const res = await fetch("/api/category-names");
+      const res = await fetch("/api/categories");
       if (res.ok) {
         const data = await res.json();
-        setCategoryNames(data.names ?? {});
+        setCategories(data.categories ?? []);
       }
     })();
   }, []);
+
+  async function handleAddCategory() {
+    const name = newCategoryName.trim();
+    if (!name) return;
+    const res = await fetch("/api/categories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ color: newCategoryColor, name }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setCategories(data.categories ?? []);
+      setCategoryColor(newCategoryColor);
+      setNewCategoryName("");
+      setAddingCategory(false);
+    } else {
+      const data = await res.json().catch(() => null);
+      setError(data?.error ?? "카테고리를 추가하지 못했어요.");
+    }
+  }
 
   // Closing (Escape, backdrop tap, 취소) without submitting shouldn't leave
   // an orphaned upload sitting in storage.
@@ -199,27 +222,73 @@ export default function AddTodoSheet({
 
           <div className="flex flex-col gap-1.5">
             <div className="flex flex-wrap items-center gap-2">
-              {CATEGORY_COLORS.map((c) => (
+              {categories.map((c) => (
                 <button
-                  key={c.value}
+                  key={c.color}
                   type="button"
-                  aria-label={categoryNames[c.value] || c.label}
-                  title={categoryNames[c.value] || c.label}
-                  onClick={() => setCategoryColor((cur) => (cur === c.value ? null : c.value))}
+                  aria-label={c.name}
+                  title={c.name}
+                  onClick={() => setCategoryColor((cur) => (cur === c.color ? null : c.color))}
                   className={[
                     "h-6 w-6 shrink-0 rounded-full transition",
-                    categoryColor === c.value ? "ring-2 ring-(--color-accent) ring-offset-2" : "",
+                    categoryColor === c.color ? "ring-2 ring-(--color-accent) ring-offset-2" : "",
                   ].join(" ")}
-                  style={{ backgroundColor: c.value }}
+                  style={{ backgroundColor: c.color }}
                 />
               ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setNewCategoryColor(randomPastelColor());
+                  setAddingCategory((v) => !v);
+                }}
+                aria-label="카테고리 추가"
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-dashed border-(--color-border) text-(--color-muted) transition hover:border-(--color-accent) hover:text-(--color-accent-dark)"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
             </div>
+
+            {addingCategory && (
+              <div className="flex items-center gap-2 rounded-xl border border-(--color-border) bg-white px-3 py-2">
+                <input
+                  type="color"
+                  value={newCategoryColor}
+                  onChange={(e) => setNewCategoryColor(e.target.value)}
+                  aria-label="새 카테고리 색상"
+                  className="h-7 w-7 shrink-0 cursor-pointer rounded-full border-0 bg-transparent p-0"
+                />
+                <input
+                  autoFocus
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddCategory();
+                    }
+                    if (e.key === "Escape") setAddingCategory(false);
+                  }}
+                  maxLength={10}
+                  placeholder="카테고리 이름"
+                  className="min-w-0 flex-1 bg-transparent text-sm text-(--color-ink) outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddCategory}
+                  disabled={!newCategoryName.trim()}
+                  className="shrink-0 rounded-full bg-black/5 px-3 py-1 text-xs font-medium text-(--color-ink) disabled:opacity-40"
+                >
+                  추가
+                </button>
+              </div>
+            )}
+
             {categoryColor && (
               <p className="text-xs text-(--color-muted)">
                 선택된 카테고리:{" "}
                 <span className="font-medium text-(--color-ink)">
-                  {categoryNames[categoryColor] ||
-                    CATEGORY_COLORS.find((c) => c.value === categoryColor)?.label}
+                  {categories.find((c) => c.color === categoryColor)?.name ?? categoryColor}
                 </span>
               </p>
             )}

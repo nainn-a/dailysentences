@@ -11,7 +11,7 @@ import {
   startOfWeek,
   toDateKey,
 } from "@/lib/date";
-import { CATEGORY_COLORS } from "@/lib/categories";
+import type { Category } from "@/lib/categories";
 import type { TodoDTO } from "@/lib/types";
 import WeekStrip from "@/components/WeekStrip";
 import TodoItem from "@/components/TodoItem";
@@ -32,7 +32,7 @@ export default function CalendarApp() {
   const [showAdd, setShowAdd] = useState(false);
   const [filterColor, setFilterColor] = useState<string | null>(null);
   const [view, setView] = useState<ViewMode>("memo");
-  const [categoryNames, setCategoryNames] = useState<Record<string, string>>({});
+  const [categories, setCategories] = useState<Category[]>([]);
   const [showTrash, setShowTrash] = useState(false);
   const [undo, setUndo] = useState<{ id: string; label: string } | null>(null);
   const undoTimerRef = useRef<number | null>(null);
@@ -75,10 +75,10 @@ export default function CalendarApp() {
 
   useEffect(() => {
     (async () => {
-      const res = await fetch("/api/category-names");
+      const res = await fetch("/api/categories");
       if (res.ok) {
         const data = await res.json();
-        setCategoryNames(data.names ?? {});
+        setCategories(data.categories ?? []);
       }
     })();
   }, []);
@@ -168,6 +168,18 @@ export default function CalendarApp() {
     }
   }
 
+  async function handleToggleDone(id: string) {
+    const target = todos.find((t) => t.id === id);
+    if (!target) return;
+    const done = !target.done;
+    setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, done } : t)));
+    await fetch(`/api/todos/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ done }),
+    });
+  }
+
   async function handleReply(parentId: string, text: string): Promise<boolean> {
     const res = await fetch("/api/todos", {
       method: "POST",
@@ -199,8 +211,8 @@ export default function CalendarApp() {
     list.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   }
 
-  const usedColors = CATEGORY_COLORS.filter((c) =>
-    topLevelTodos.some((t) => t.categoryColor === c.value),
+  const usedColors = categories.filter((c) =>
+    topLevelTodos.some((t) => t.categoryColor === c.color),
   );
   const visibleTodos = filterColor
     ? topLevelTodos.filter((t) => t.categoryColor === filterColor)
@@ -285,15 +297,16 @@ export default function CalendarApp() {
               </button>
               {usedColors.map((c) => (
                 <button
-                  key={c.value}
+                  key={c.color}
                   type="button"
-                  aria-label={c.label}
-                  onClick={() => setFilterColor((cur) => (cur === c.value ? null : c.value))}
+                  aria-label={c.name}
+                  title={c.name}
+                  onClick={() => setFilterColor((cur) => (cur === c.color ? null : c.color))}
                   className={[
                     "h-6 w-6 shrink-0 rounded-full transition",
-                    filterColor === c.value ? "ring-2 ring-(--color-accent) ring-offset-2" : "",
+                    filterColor === c.color ? "ring-2 ring-(--color-accent) ring-offset-2" : "",
                   ].join(" ")}
-                  style={{ backgroundColor: c.value }}
+                  style={{ backgroundColor: c.color }}
                 />
               ))}
             </div>
@@ -319,9 +332,10 @@ export default function CalendarApp() {
                   key={todo.id}
                   todo={todo}
                   replies={repliesByParent[todo.id] ?? []}
-                  categoryNames={categoryNames}
+                  categories={categories}
                   onDelete={handleDelete}
                   onEdit={handleEdit}
+                  onToggleDone={handleToggleDone}
                   onReply={handleReply}
                 />
               ))}

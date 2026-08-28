@@ -16,7 +16,7 @@ const freesentation = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "날짜메모 — 캘린더 메모장",
+  title: "Daily Sentences",
   description: "날짜별로 메모와 할 일을 남기는 캘린더 웹앱. Google 계정으로 로그인하세요.",
 };
 
