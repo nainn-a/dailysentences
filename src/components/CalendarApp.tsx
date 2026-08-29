@@ -33,6 +33,7 @@ export default function CalendarApp() {
   const [todos, setTodos] = useState<TodoDTO[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [monthCounts, setMonthCounts] = useState<Record<string, number>>({});
+  const [monthDiaryDates, setMonthDiaryDates] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [filterColor, setFilterColor] = useState<string | null>(null);
@@ -59,12 +60,19 @@ export default function CalendarApp() {
 
   const loadMonthCounts = useCallback(async (month: Date) => {
     const grid = monthGridDays(month);
-    const res = await fetch(
-      `/api/todos?start=${toDateKey(grid[0])}&end=${toDateKey(grid[grid.length - 1])}`,
-    );
-    if (res.ok) {
-      const data = await res.json();
+    const start = toDateKey(grid[0]);
+    const end = toDateKey(grid[grid.length - 1]);
+    const [todosRes, diaryRes] = await Promise.all([
+      fetch(`/api/todos?start=${start}&end=${end}`),
+      fetch(`/api/diary?start=${start}&end=${end}`),
+    ]);
+    if (todosRes.ok) {
+      const data = await todosRes.json();
       setMonthCounts(data.counts ?? {});
+    }
+    if (diaryRes.ok) {
+      const data = await diaryRes.json();
+      setMonthDiaryDates(new Set<string>(data.dates ?? []));
     }
   }, []);
 
@@ -296,12 +304,15 @@ export default function CalendarApp() {
       </div>
 
       <div className="flex min-h-0 flex-1">
-        {/* Month grid — wide viewports only; phones navigate by the week strip above */}
-        <aside className="hidden w-96 shrink-0 flex-col gap-4 overflow-y-auto border-r border-(--color-border) bg-(--color-surface) p-6 md:flex lg:w-[27rem]">
+        {/* Month grid — wide viewports only; phones navigate by the week strip above.
+            50/50 split with the day list: w-1/2 + shrink-0 here, flex-1 on the
+            list side, so the two always add up to the full width. */}
+        <aside className="hidden w-1/2 shrink-0 flex-col gap-4 overflow-y-auto border-r border-(--color-border) bg-(--color-surface) p-6 md:flex">
           <MonthCalendar
             month={calendarMonth}
             selected={selected}
             counts={monthCounts}
+            diaryDates={monthDiaryDates}
             onSelectDate={handleSelectDate}
             onChangeMonth={setCalendarMonth}
           />
@@ -331,7 +342,18 @@ export default function CalendarApp() {
 
           {view === "diary" ? (
             <main className="relative flex-1 overflow-y-auto px-4 py-5 sm:px-6">
-              <DiaryEditor date={selectedKey} dateLabel={headerDate} />
+              <DiaryEditor
+                date={selectedKey}
+                dateLabel={headerDate}
+                onSaved={(date, hasContent) =>
+                  setMonthDiaryDates((prev) => {
+                    const next = new Set(prev);
+                    if (hasContent) next.add(date);
+                    else next.delete(date);
+                    return next;
+                  })
+                }
+              />
             </main>
           ) : (
             /* Todo list */

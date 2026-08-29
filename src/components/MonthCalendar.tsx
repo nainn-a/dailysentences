@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 
 import {
   addMonths,
@@ -16,13 +16,17 @@ export default function MonthCalendar({
   month,
   selected,
   counts,
+  diaryDates,
   onSelectDate,
   onChangeMonth,
 }: {
   /** Any date within the month currently on screen. */
   month: Date;
   selected: Date;
+  /** Memo count per date key ("YYYY-MM-DD"). */
   counts: Record<string, number>;
+  /** Date keys that have a non-empty 일기 entry. */
+  diaryDates: Set<string>;
   onSelectDate: (d: Date) => void;
   onChangeMonth: (month: Date) => void;
 }) {
@@ -68,7 +72,8 @@ export default function MonthCalendar({
           const inMonth = day.getMonth() === month.getMonth();
           const isSelected = isSameDay(day, selected);
           const isToday = isSameDay(day, today);
-          const hasEntries = (counts[key] ?? 0) > 0;
+          const memoCount = counts[key] ?? 0;
+          const hasDiary = diaryDates.has(key);
 
           return (
             <button
@@ -92,12 +97,29 @@ export default function MonthCalendar({
               >
                 {day.getDate()}
               </span>
-              <span
-                className={[
-                  "h-1.5 w-1.5 rounded-full",
-                  hasEntries ? "bg-(--color-accent)" : "bg-transparent",
-                ].join(" ")}
-              />
+              {/* 이 날짜의 메모 개수(숫자 뱃지)와 일기 작성 여부(책 아이콘) —
+                  둘 다 없으면 자리만 비워 다른 날과 높이를 맞춘다. */}
+              <span className="flex h-4 items-center gap-1">
+                {memoCount > 0 && (
+                  <span
+                    className={[
+                      "flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums",
+                      isSelected
+                        ? "bg-(--color-accent)/20 text-(--color-accent-dark)"
+                        : "bg-(--color-accent)/15 text-(--color-accent-dark)",
+                    ].join(" ")}
+                  >
+                    {memoCount}
+                  </span>
+                )}
+                {hasDiary && (
+                  <BookOpen
+                    aria-label="일기 작성함"
+                    className="h-3 w-3 shrink-0 text-(--color-ink)"
+                    strokeWidth={2.25}
+                  />
+                )}
+              </span>
             </button>
           );
         })}

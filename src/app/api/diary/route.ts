@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { AUTH_COOKIE_NAME, isValidAuthCookieValue } from "@/lib/auth-cookie";
-import { MAX_DIARY_LENGTH, getDiary, saveDiary } from "@/lib/diary-store";
+import { MAX_DIARY_LENGTH, diaryDatesBetween, getDiary, saveDiary } from "@/lib/diary-store";
 import type { DiaryImage } from "@/lib/types";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -31,7 +31,10 @@ function parseImages(input: unknown): DiaryImage[] | null {
   return images;
 }
 
-// GET /api/diary?date=YYYY-MM-DD -> that day's journal entry, or null.
+// GET /api/diary?date=YYYY-MM-DD          -> that day's journal entry, or null.
+// GET /api/diary?start=YYYY-MM-DD&end=...  -> { dates: ["YYYY-MM-DD", ...] }
+//     the dates in range that have a non-empty entry — used to paint the
+//     "일기 작성함" dot on the month calendar.
 export async function GET(request: Request) {
   if (!(await requireAuth())) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
@@ -39,8 +42,19 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const date = searchParams.get("date");
+  const start = searchParams.get("start");
+  const end = searchParams.get("end");
+
+  if (start && end) {
+    if (!DATE_RE.test(start) || !DATE_RE.test(end)) {
+      return NextResponse.json({ error: "start/end 형식이 올바르지 않습니다." }, { status: 400 });
+    }
+    const dates = await diaryDatesBetween(start, end);
+    return NextResponse.json({ dates });
+  }
+
   if (!date || !DATE_RE.test(date)) {
-    return NextResponse.json({ error: "date 형식이 올바르지 않습니다." }, { status: 400 });
+    return NextResponse.json({ error: "date 또는 start/end 쿼리 파라미터가 필요합니다." }, { status: 400 });
   }
 
   const entry = await getDiary(date);
