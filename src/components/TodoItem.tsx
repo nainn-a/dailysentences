@@ -34,6 +34,7 @@ export default function TodoItem({
 }) {
   const [pendingDelete, setPendingDelete] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [replying, setReplying] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
@@ -45,11 +46,13 @@ export default function TodoItem({
   const pressTimerRef = useRef<number | null>(null);
   const longPressFiredRef = useRef(false);
   const clickTimerRef = useRef<number | null>(null);
+  const copiedTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
       if (pressTimerRef.current !== null) window.clearTimeout(pressTimerRef.current);
       if (clickTimerRef.current !== null) window.clearTimeout(clickTimerRef.current);
+      if (copiedTimerRef.current !== null) window.clearTimeout(copiedTimerRef.current);
     };
   }, []);
 
@@ -86,13 +89,27 @@ export default function TodoItem({
     }
   }
 
+  async function copyMemo() {
+    try {
+      await navigator.clipboard.writeText(todo.text);
+    } catch {
+      return;
+    }
+    if (copiedTimerRef.current !== null) window.clearTimeout(copiedTimerRef.current);
+    setCopied(true);
+    copiedTimerRef.current = window.setTimeout(() => {
+      copiedTimerRef.current = null;
+      setCopied(false);
+    }, 1200);
+  }
+
   function handlePressStart() {
     longPressFiredRef.current = false;
     clearPressTimer();
     pressTimerRef.current = window.setTimeout(() => {
       longPressFiredRef.current = true;
       if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(15);
-      onDelete(todo.id);
+      copyMemo();
     }, LONG_PRESS_MS);
   }
 
@@ -102,10 +119,11 @@ export default function TodoItem({
 
   // One tap edits; two quick taps toggle the strikethrough (done) instead —
   // held apart by a short delay so the second tap has a chance to arrive.
-  // Press-and-hold (above) still deletes, and wins over both if it fires.
+  // Press-and-hold (above) copies the memo text, and wins over both if it
+  // fires first.
   function handlePillClick() {
     if (longPressFiredRef.current) {
-      // Swallow the click that follows a long-press delete.
+      // Swallow the click that follows a long-press copy.
       longPressFiredRef.current = false;
       return;
     }
@@ -128,7 +146,15 @@ export default function TodoItem({
           {todo.time}
         </span>
 
-        <div className="glass flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-(--color-pill) px-4 py-3 shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition">
+        <div className="glass relative flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-(--color-pill) px-4 py-3 shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition">
+          {copied && (
+            <span
+              aria-live="polite"
+              className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 rounded-full bg-black/80 px-2.5 py-1 text-[11px] whitespace-nowrap text-white shadow"
+            >
+              복사됨
+            </span>
+          )}
           {todo.imageUrl && (
             <button
               type="button"
