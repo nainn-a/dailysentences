@@ -260,15 +260,17 @@ export default function CalendarApp() {
 
   return (
     <>
-      {/* Header */}
-      <header className="glass flex items-center justify-between border-b border-(--color-border) bg-(--color-surface) px-4 py-4 sm:px-6">
-        <h1 className="text-xl font-semibold text-(--color-ink)">{headerDate}</h1>
-        <div className="flex items-center gap-3">
+      {/* Header — the one dark, high-contrast band every screen shares */}
+      <header className="flex items-center justify-between bg-(--color-panel) px-4 py-5 sm:px-6">
+        <h1 className="font-display text-2xl text-(--color-panel-ink) sm:text-3xl">
+          {headerDate}
+        </h1>
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setShowTrash(true)}
             aria-label="휴지통"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-(--color-muted) transition hover:bg-black/5"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-(--color-panel-muted) transition hover:bg-white/10 hover:text-(--color-panel-ink)"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -276,7 +278,7 @@ export default function CalendarApp() {
             type="button"
             onClick={handleLogout}
             aria-label="로그아웃"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-(--color-muted) transition hover:bg-black/5"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-(--color-panel-muted) transition hover:bg-white/10 hover:text-(--color-panel-ink)"
           >
             <LogOut className="h-4 w-4" />
           </button>
@@ -284,7 +286,7 @@ export default function CalendarApp() {
       </header>
 
       {/* Week strip — phones only; wide viewports get the month grid instead */}
-      <div className="glass border-b border-(--color-border) bg-(--color-surface) md:hidden">
+      <div className="border-b border-(--color-border) bg-(--color-surface) md:hidden">
         <WeekStrip
           weekStart={weekStart}
           selected={selected}
@@ -295,7 +297,7 @@ export default function CalendarApp() {
 
       <div className="flex min-h-0 flex-1">
         {/* Month grid — wide viewports only; phones navigate by the week strip above */}
-        <aside className="glass hidden w-96 shrink-0 flex-col gap-4 overflow-y-auto border-r border-(--color-border) bg-(--color-surface) p-6 md:flex lg:w-[27rem]">
+        <aside className="hidden w-96 shrink-0 flex-col gap-4 overflow-y-auto border-r border-(--color-border) bg-(--color-surface) p-6 md:flex lg:w-[27rem]">
           <MonthCalendar
             month={calendarMonth}
             selected={selected}
@@ -307,7 +309,7 @@ export default function CalendarApp() {
 
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Memo / Diary segmented toggle */}
-          <div className="glass flex justify-center border-b border-(--color-border) bg-(--color-surface) px-4 py-2 sm:px-6">
+          <div className="flex justify-center border-b border-(--color-border) bg-(--color-surface) px-4 py-2 sm:px-6">
             <div className="flex gap-1 rounded-full bg-black/5 p-1">
               {(["memo", "diary"] as const).map((key) => (
                 <button

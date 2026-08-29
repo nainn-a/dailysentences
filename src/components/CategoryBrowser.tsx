@@ -222,13 +222,13 @@ export default function CategoryBrowser() {
 
   return (
     <>
-      <header className="glass flex items-center justify-between border-b border-(--color-border) bg-(--color-surface) px-4 py-4 sm:px-6">
-        <h1 className="text-xl font-semibold text-(--color-ink)">카테고리</h1>
+      <header className="flex items-center justify-between bg-(--color-panel) px-4 py-5 sm:px-6">
+        <h1 className="font-display text-2xl text-(--color-panel-ink) sm:text-3xl">카테고리</h1>
         <button
           type="button"
           onClick={handleLogout}
           aria-label="로그아웃"
-          className="flex h-8 w-8 items-center justify-center rounded-full text-(--color-muted) transition hover:bg-black/5"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-(--color-panel-muted) transition hover:bg-white/10 hover:text-(--color-panel-ink)"
         >
           <LogOut className="h-4 w-4" />
         </button>
@@ -244,7 +244,7 @@ export default function CategoryBrowser() {
                   e.preventDefault();
                   submitRename();
                 }}
-                className="glass flex items-center gap-1.5 rounded-full border border-(--color-border) bg-(--color-surface-strong) py-1 pl-3 pr-1.5"
+                className="flex items-center gap-1.5 rounded-full border border-(--color-border) bg-(--color-surface-strong) py-1 pl-3 pr-1.5"
               >
                 <span
                   aria-hidden
