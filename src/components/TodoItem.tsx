@@ -92,7 +92,7 @@ export default function TodoItem({
     pressTimerRef.current = window.setTimeout(() => {
       longPressFiredRef.current = true;
       if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(15);
-      onDelete(todo.id);
+      onToggleDone?.(todo.id);
     }, LONG_PRESS_MS);
   }
 
@@ -102,10 +102,11 @@ export default function TodoItem({
 
   // One tap edits; two quick taps toggle the strikethrough (done) instead —
   // held apart by a short delay so the second tap has a chance to arrive.
-  // Press-and-hold (above) still deletes, and wins over both if it fires.
+  // Press-and-hold (above) also toggles the strikethrough, and wins over
+  // both if it fires first.
   function handlePillClick() {
     if (longPressFiredRef.current) {
-      // Swallow the click that follows a long-press delete.
+      // Swallow the click that follows a long-press toggle.
       longPressFiredRef.current = false;
       return;
     }
