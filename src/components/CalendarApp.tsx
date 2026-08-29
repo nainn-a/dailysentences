@@ -8,12 +8,15 @@ import {
   addDays,
   formatHeaderDate,
   formatNowTime,
+  monthGridDays,
+  startOfMonth,
   startOfWeek,
   toDateKey,
 } from "@/lib/date";
 import type { Category } from "@/lib/categories";
 import type { TodoDTO } from "@/lib/types";
 import WeekStrip from "@/components/WeekStrip";
+import MonthCalendar from "@/components/MonthCalendar";
 import TodoItem from "@/components/TodoItem";
 import AddTodoSheet from "@/components/AddTodoSheet";
 import DiaryEditor from "@/components/DiaryEditor";
@@ -26,8 +29,10 @@ type ViewMode = "memo" | "diary";
 export default function CalendarApp() {
   const router = useRouter();
   const [selected, setSelected] = useState(() => new Date());
+  const [calendarMonth, setCalendarMonth] = useState(() => startOfMonth(new Date()));
   const [todos, setTodos] = useState<TodoDTO[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [monthCounts, setMonthCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [filterColor, setFilterColor] = useState<string | null>(null);
@@ -52,6 +57,17 @@ export default function CalendarApp() {
     }
   }, []);
 
+  const loadMonthCounts = useCallback(async (month: Date) => {
+    const grid = monthGridDays(month);
+    const res = await fetch(
+      `/api/todos?start=${toDateKey(grid[0])}&end=${toDateKey(grid[grid.length - 1])}`,
+    );
+    if (res.ok) {
+      const data = await res.json();
+      setMonthCounts(data.counts ?? {});
+    }
+  }, []);
+
   const loadDayTodos = useCallback(async (key: string) => {
     setLoading(true);
     const res = await fetch(`/api/todos?date=${key}`);
@@ -72,6 +88,11 @@ export default function CalendarApp() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetch on week change, not derived state
     loadWeekCounts(weekStart);
   }, [weekStart, loadWeekCounts]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetch on visible month change, not derived state
+    loadMonthCounts(calendarMonth);
+  }, [calendarMonth, loadMonthCounts]);
 
   useEffect(() => {
     (async () => {
@@ -111,6 +132,7 @@ export default function CalendarApp() {
       const data = await res.json();
       setTodos((prev) => [data.todo, ...prev]);
       setCounts((prev) => ({ ...prev, [selectedKey]: (prev[selectedKey] ?? 0) + 1 }));
+      setMonthCounts((prev) => ({ ...prev, [selectedKey]: (prev[selectedKey] ?? 0) + 1 }));
       setShowAdd(false);
     }
   }
@@ -142,6 +164,10 @@ export default function CalendarApp() {
       ...prev,
       [selectedKey]: Math.max(0, (prev[selectedKey] ?? removedCount) - removedCount),
     }));
+    setMonthCounts((prev) => ({
+      ...prev,
+      [selectedKey]: Math.max(0, (prev[selectedKey] ?? removedCount) - removedCount),
+    }));
     await fetch(`/api/todos/${id}`, { method: "DELETE" });
 
     // The delete is a soft delete server-side (see store.ts) — this just
@@ -164,7 +190,11 @@ export default function CalendarApp() {
       body: JSON.stringify({ id }),
     });
     if (res.ok) {
-      await Promise.all([loadDayTodos(selectedKey), loadWeekCounts(weekStart)]);
+      await Promise.all([
+        loadDayTodos(selectedKey),
+        loadWeekCounts(weekStart),
+        loadMonthCounts(calendarMonth),
+      ]);
     }
   }
 
@@ -190,6 +220,7 @@ export default function CalendarApp() {
       const data = await res.json();
       setTodos((prev) => [data.todo, ...prev]);
       setCounts((prev) => ({ ...prev, [selectedKey]: (prev[selectedKey] ?? 0) + 1 }));
+      setMonthCounts((prev) => ({ ...prev, [selectedKey]: (prev[selectedKey] ?? 0) + 1 }));
     }
     return res.ok;
   }
@@ -218,6 +249,15 @@ export default function CalendarApp() {
     ? topLevelTodos.filter((t) => t.categoryColor === filterColor)
     : topLevelTodos;
 
+  // Picking a day from the desktop month grid can land on a leading/trailing
+  // day borrowed from an adjacent month — follow it there.
+  function handleSelectDate(day: Date) {
+    setSelected(day);
+    if (day.getMonth() !== calendarMonth.getMonth() || day.getFullYear() !== calendarMonth.getFullYear()) {
+      setCalendarMonth(startOfMonth(day));
+    }
+  }
+
   return (
     <>
       {/* Header */}
@@ -243,8 +283,8 @@ export default function CalendarApp() {
         </div>
       </header>
 
-      {/* Week strip */}
-      <div className="glass border-b border-(--color-border) bg-(--color-surface)">
+      {/* Week strip — phones only; wide viewports get the month grid instead */}
+      <div className="glass border-b border-(--color-border) bg-(--color-surface) md:hidden">
         <WeekStrip
           weekStart={weekStart}
           selected={selected}
@@ -253,106 +293,121 @@ export default function CalendarApp() {
         />
       </div>
 
-      {/* Memo / Diary segmented toggle */}
-      <div className="glass flex justify-center border-b border-(--color-border) bg-(--color-surface) px-4 py-2 sm:px-6">
-        <div className="flex gap-1 rounded-full bg-black/5 p-1">
-          {(["memo", "diary"] as const).map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setView(key)}
-              className={[
-                "rounded-full px-4 py-1.5 text-sm font-medium transition",
-                view === key
-                  ? "bg-(--color-surface-strong) text-(--color-ink) shadow-sm"
-                  : "text-(--color-muted)",
-              ].join(" ")}
-            >
-              {key === "memo" ? "메모" : "일기"}
-            </button>
-          ))}
-        </div>
-      </div>
+      <div className="flex min-h-0 flex-1">
+        {/* Month grid — wide viewports only; phones navigate by the week strip above */}
+        <aside className="glass hidden w-64 shrink-0 flex-col gap-4 overflow-y-auto border-r border-(--color-border) bg-(--color-surface) p-5 md:flex lg:w-72">
+          <MonthCalendar
+            month={calendarMonth}
+            selected={selected}
+            counts={monthCounts}
+            onSelectDate={handleSelectDate}
+            onChangeMonth={setCalendarMonth}
+          />
+        </aside>
 
-      {view === "diary" ? (
-        <main className="relative flex-1 overflow-y-auto px-4 py-5 sm:px-6">
-          <DiaryEditor date={selectedKey} dateLabel={headerDate} />
-        </main>
-      ) : (
-        /* Todo list */
-        <main className="relative flex-1 overflow-y-auto px-4 py-5 sm:px-6">
-          {usedColors.length > 0 && (
-            <div className="mx-auto mb-4 flex max-w-2xl flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-1 flex-col">
+          {/* Memo / Diary segmented toggle */}
+          <div className="glass flex justify-center border-b border-(--color-border) bg-(--color-surface) px-4 py-2 sm:px-6">
+            <div className="flex gap-1 rounded-full bg-black/5 p-1">
+              {(["memo", "diary"] as const).map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setView(key)}
+                  className={[
+                    "rounded-full px-4 py-1.5 text-sm font-medium transition",
+                    view === key
+                      ? "bg-(--color-surface-strong) text-(--color-ink) shadow-sm"
+                      : "text-(--color-muted)",
+                  ].join(" ")}
+                >
+                  {key === "memo" ? "메모" : "일기"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {view === "diary" ? (
+            <main className="relative flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+              <DiaryEditor date={selectedKey} dateLabel={headerDate} />
+            </main>
+          ) : (
+            /* Todo list */
+            <main className="relative flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+              {usedColors.length > 0 && (
+                <div className="mx-auto mb-4 flex max-w-2xl flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFilterColor(null)}
+                    className={[
+                      "rounded-full px-3 py-1 text-xs font-medium transition",
+                      filterColor === null
+                        ? "bg-(--color-ink) text-white"
+                        : "bg-black/5 text-(--color-muted) hover:bg-black/10",
+                    ].join(" ")}
+                  >
+                    전체
+                  </button>
+                  {usedColors.map((c) => (
+                    <button
+                      key={c.color}
+                      type="button"
+                      aria-label={c.name}
+                      title={c.name}
+                      onClick={() => setFilterColor((cur) => (cur === c.color ? null : c.color))}
+                      className={[
+                        "h-6 w-6 shrink-0 rounded-full transition",
+                        filterColor === c.color ? "ring-2 ring-(--color-accent) ring-offset-2" : "",
+                      ].join(" ")}
+                      style={{ backgroundColor: c.color }}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {loading ? (
+                <p className="mt-10 text-center text-sm text-(--color-muted)">불러오는 중…</p>
+              ) : visibleTodos.length === 0 ? (
+                <div className="mt-16 flex flex-col items-center gap-2 text-center">
+                  <p className="text-sm text-(--color-muted)">
+                    {filterColor
+                      ? "이 색상의 메모가 없어요."
+                      : "이 날짜에 남긴 메모가 아직 없어요."}
+                  </p>
+                  <p className="text-xs text-(--color-muted)">
+                    오른쪽 아래 + 버튼으로 새 메모를 추가해보세요.
+                  </p>
+                </div>
+              ) : (
+                <div className="mx-auto flex max-w-2xl flex-col gap-3">
+                  {visibleTodos.map((todo) => (
+                    <TodoItem
+                      key={todo.id}
+                      todo={todo}
+                      replies={repliesByParent[todo.id] ?? []}
+                      categories={categories}
+                      onDelete={handleDelete}
+                      onEdit={handleEdit}
+                      onToggleDone={handleToggleDone}
+                      onReply={handleReply}
+                    />
+                  ))}
+                </div>
+              )}
+
               <button
                 type="button"
-                onClick={() => setFilterColor(null)}
-                className={[
-                  "rounded-full px-3 py-1 text-xs font-medium transition",
-                  filterColor === null
-                    ? "bg-(--color-ink) text-white"
-                    : "bg-black/5 text-(--color-muted) hover:bg-black/10",
-                ].join(" ")}
+                onClick={() => setShowAdd(true)}
+                aria-label="새 메모 추가"
+                style={{ backgroundImage: "var(--gradient-accent)" }}
+                className="fixed bottom-24 right-5 flex h-14 w-14 items-center justify-center rounded-full text-(--color-accent-ink) shadow-lg transition hover:brightness-105 active:scale-95 md:bottom-8 md:right-8"
               >
-                전체
+                <Plus className="h-6 w-6" />
               </button>
-              {usedColors.map((c) => (
-                <button
-                  key={c.color}
-                  type="button"
-                  aria-label={c.name}
-                  title={c.name}
-                  onClick={() => setFilterColor((cur) => (cur === c.color ? null : c.color))}
-                  className={[
-                    "h-6 w-6 shrink-0 rounded-full transition",
-                    filterColor === c.color ? "ring-2 ring-(--color-accent) ring-offset-2" : "",
-                  ].join(" ")}
-                  style={{ backgroundColor: c.color }}
-                />
-              ))}
-            </div>
+            </main>
           )}
-
-          {loading ? (
-            <p className="mt-10 text-center text-sm text-(--color-muted)">불러오는 중…</p>
-          ) : visibleTodos.length === 0 ? (
-            <div className="mt-16 flex flex-col items-center gap-2 text-center">
-              <p className="text-sm text-(--color-muted)">
-                {filterColor
-                  ? "이 색상의 메모가 없어요."
-                  : "이 날짜에 남긴 메모가 아직 없어요."}
-              </p>
-              <p className="text-xs text-(--color-muted)">
-                오른쪽 아래 + 버튼으로 새 메모를 추가해보세요.
-              </p>
-            </div>
-          ) : (
-            <div className="mx-auto flex max-w-2xl flex-col gap-3">
-              {visibleTodos.map((todo) => (
-                <TodoItem
-                  key={todo.id}
-                  todo={todo}
-                  replies={repliesByParent[todo.id] ?? []}
-                  categories={categories}
-                  onDelete={handleDelete}
-                  onEdit={handleEdit}
-                  onToggleDone={handleToggleDone}
-                  onReply={handleReply}
-                />
-              ))}
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={() => setShowAdd(true)}
-            aria-label="새 메모 추가"
-            style={{ backgroundImage: "var(--gradient-accent)" }}
-            className="fixed bottom-24 right-5 flex h-14 w-14 items-center justify-center rounded-full text-(--color-accent-ink) shadow-lg transition hover:brightness-105 active:scale-95 md:bottom-8 md:right-8"
-          >
-            <Plus className="h-6 w-6" />
-          </button>
-        </main>
-      )}
+        </div>
+      </div>
 
       {showAdd && (
         <AddTodoSheet
@@ -368,6 +423,7 @@ export default function CalendarApp() {
           onRestored={() => {
             loadDayTodos(selectedKey);
             loadWeekCounts(weekStart);
+            loadMonthCounts(calendarMonth);
           }}
         />
       )}

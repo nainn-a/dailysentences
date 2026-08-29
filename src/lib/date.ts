@@ -41,6 +41,36 @@ export function formatHeaderDate(d: Date): string {
   return `${d.getMonth() + 1}월 ${d.getDate()}일 (${weekday})`;
 }
 
+/** The 1st of the month containing `d`, at local midnight. */
+export function startOfMonth(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+
+/** The 1st of the month `n` months away from `d`'s month. */
+export function addMonths(d: Date, n: number): Date {
+  return new Date(d.getFullYear(), d.getMonth() + n, 1);
+}
+
+export function formatMonthLabel(d: Date): string {
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월`;
+}
+
+/**
+ * The Monday-start weeks that fully cover the month containing `d` — the
+ * classic 5-6 row month-calendar grid, including the leading/trailing days
+ * borrowed from the adjacent months.
+ */
+export function monthGridDays(d: Date): Date[] {
+  const first = startOfMonth(d);
+  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  const gridStart = startOfWeek(first);
+  const lastWeekday = last.getDay(); // 0 = Sun ... 6 = Sat
+  const gridEnd = addDays(last, lastWeekday === 0 ? 0 : 7 - lastWeekday);
+
+  const totalDays = Math.round((gridEnd.getTime() - gridStart.getTime()) / 86_400_000) + 1;
+  return Array.from({ length: totalDays }, (_, i) => addDays(gridStart, i));
+}
+
 export function formatNowTime(): string {
   const now = new Date();
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
