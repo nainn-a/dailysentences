@@ -38,21 +38,11 @@ function LoginForm() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-12 px-6 py-16">
-      <div className="flex flex-col items-center gap-4 text-center">
-        <span className="flex items-center gap-1.5 rounded-full border border-(--color-border) bg-(--color-surface) px-3 py-1 text-[11px] font-medium tracking-wide text-(--color-muted)">
-          <span
-            aria-hidden
-            style={{ backgroundImage: "var(--gradient-accent)" }}
-            className="h-1.5 w-1.5 rounded-full"
-          />
-          매일을 기록하는 하루
-        </span>
-        <h1 className="font-display text-6xl leading-[0.95] text-(--color-ink) sm:text-7xl">
-          DAILY
-          <br />
-          SENTENCES
-        </h1>
-      </div>
+      <h1 className="font-display text-center text-6xl leading-[0.95] text-(--color-ink) sm:text-7xl">
+        DAILY
+        <br />
+        SENTENCES
+      </h1>
 
       <form onSubmit={handleSubmit} className="flex w-full max-w-xs flex-col gap-3">
         <div className="flex items-center gap-2 rounded-full border border-(--color-border) bg-(--color-surface) px-4 py-3 shadow-sm focus-within:border-(--color-accent)">
