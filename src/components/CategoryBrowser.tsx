@@ -235,7 +235,7 @@ export default function CategoryBrowser() {
       </header>
 
       <main className="relative flex-1 overflow-y-auto px-4 py-5 sm:px-6">
-        <div className="mx-auto flex max-w-2xl flex-wrap items-center gap-2">
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center gap-2">
           {categories.map((c) =>
             renamingColor === c.color ? (
               <form
@@ -342,7 +342,7 @@ export default function CategoryBrowser() {
         </div>
 
         {addingCategory && (
-          <div className="mx-auto mt-2 flex max-w-2xl items-center gap-2 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 py-2">
+          <div className="mx-auto mt-2 flex max-w-4xl items-center gap-2 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 py-2">
             <input
               type="color"
               value={newCategoryColor}
@@ -377,10 +377,10 @@ export default function CategoryBrowser() {
         )}
 
         {categoryError && (
-          <p className="mx-auto mt-2 max-w-2xl text-xs text-red-500">{categoryError}</p>
+          <p className="mx-auto mt-2 max-w-4xl text-xs text-red-500">{categoryError}</p>
         )}
 
-        <div className="mx-auto mt-6 flex max-w-2xl flex-col gap-6">
+        <div className="mx-auto mt-6 flex max-w-4xl flex-col gap-6">
           {!color ? (
             <p className="mt-10 text-center text-sm text-(--color-muted)">
               위에서 색상을 고르면 그 카테고리의 메모를 날짜와 상관없이 모아볼 수 있어요.
