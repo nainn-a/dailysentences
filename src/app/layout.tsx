@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import { Black_Han_Sans } from "next/font/google";
 import "./globals.css";
 
 // Times New Roman leads the stack for Latin glyphs (it has no Hangul, so
@@ -17,10 +16,10 @@ const freesentation = localFont({
 });
 
 // Oversized display headings (page titles, the login wordmark) borrow this
-// heavy poster-style face instead of just scaling up Freesentation — it's
-// what actually reads as "designed" rather than "default UI font, but big".
-const blackHanSans = Black_Han_Sans({
-  subsets: ["korean", "latin"],
+// face instead of just scaling up Freesentation — it's what actually reads
+// as "designed" rather than "default UI font, but big".
+const partialSans = localFont({
+  src: "../fonts/PartialSansKR-Regular.otf",
   weight: "400",
   variable: "--font-display",
   display: "swap",
@@ -42,7 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="ko"
-      className={`${freesentation.variable} ${blackHanSans.variable} h-full antialiased`}
+      className={`${freesentation.variable} ${partialSans.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col text-(--color-ink)">
         {children}
