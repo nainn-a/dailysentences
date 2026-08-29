@@ -295,7 +295,7 @@ export default function CalendarApp() {
 
       <div className="flex min-h-0 flex-1">
         {/* Month grid — wide viewports only; phones navigate by the week strip above */}
-        <aside className="glass hidden w-64 shrink-0 flex-col gap-4 overflow-y-auto border-r border-(--color-border) bg-(--color-surface) p-5 md:flex lg:w-72">
+        <aside className="glass hidden w-96 shrink-0 flex-col gap-4 overflow-y-auto border-r border-(--color-border) bg-(--color-surface) p-6 md:flex lg:w-[27rem]">
           <MonthCalendar
             month={calendarMonth}
             selected={selected}

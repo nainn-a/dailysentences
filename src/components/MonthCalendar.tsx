@@ -30,34 +30,34 @@ export default function MonthCalendar({
   const today = new Date();
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-(--color-ink)">{formatMonthLabel(month)}</h2>
+        <h2 className="text-base font-semibold text-(--color-ink)">{formatMonthLabel(month)}</h2>
         <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => onChangeMonth(addMonths(month, -1))}
             aria-label="이전 달"
-            className="flex h-6 w-6 items-center justify-center rounded-full text-(--color-muted) transition hover:bg-black/5"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-(--color-muted) transition hover:bg-black/5"
           >
-            <ChevronLeft className="h-3.5 w-3.5" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={() => onChangeMonth(addMonths(month, 1))}
             aria-label="다음 달"
-            className="flex h-6 w-6 items-center justify-center rounded-full text-(--color-muted) transition hover:bg-black/5"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-(--color-muted) transition hover:bg-black/5"
           >
-            <ChevronRight className="h-3.5 w-3.5" />
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-y-1">
+      <div className="grid grid-cols-7 gap-y-2">
         {WEEKDAY_LABELS_KO.map((label) => (
           <span
             key={label}
-            className="pb-1 text-center text-[11px] font-medium text-(--color-muted)"
+            className="pb-1 text-center text-xs font-medium text-(--color-muted)"
           >
             {label}
           </span>
@@ -75,12 +75,12 @@ export default function MonthCalendar({
               key={key}
               type="button"
               onClick={() => onSelectDate(day)}
-              className="flex flex-col items-center gap-1 rounded-lg py-1 transition hover:bg-black/[0.03]"
+              className="flex flex-col items-center gap-1.5 rounded-lg py-1.5 transition hover:bg-black/[0.03]"
             >
               <span
                 style={isSelected ? { backgroundImage: "var(--gradient-accent)" } : undefined}
                 className={[
-                  "flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium transition",
+                  "flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition",
                   isSelected
                     ? "text-(--color-accent-ink) shadow-sm"
                     : !inMonth
@@ -94,7 +94,7 @@ export default function MonthCalendar({
               </span>
               <span
                 className={[
-                  "h-1 w-1 rounded-full",
+                  "h-1.5 w-1.5 rounded-full",
                   hasEntries ? "bg-(--color-accent)" : "bg-transparent",
                 ].join(" ")}
               />
