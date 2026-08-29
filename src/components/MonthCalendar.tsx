@@ -78,7 +78,7 @@ export default function MonthCalendar({
               className="flex flex-col items-center gap-1.5 rounded-lg py-1.5 transition hover:bg-black/[0.03]"
             >
               <span
-                style={isSelected ? { backgroundImage: "var(--gradient-accent)" } : undefined}
+                style={isSelected ? { backgroundImage: "var(--gradient-accent-glossy)" } : undefined}
                 className={[
                   "flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition",
                   isSelected

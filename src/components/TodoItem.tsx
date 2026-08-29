@@ -146,7 +146,7 @@ export default function TodoItem({
           {todo.time}
         </span>
 
-        <div className="relative flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-(--color-border) bg-(--color-pill) px-4 py-3 transition">
+        <div className="relative flex min-w-0 flex-1 items-center gap-3 rounded-none border border-(--color-border) bg-(--color-pill) px-4 py-3 transition">
           {copied && (
             <span
               aria-live="polite"
@@ -344,7 +344,7 @@ export default function TodoItem({
           <button
             type="submit"
             disabled={!replyText.trim() || sending}
-            style={{ backgroundImage: "var(--gradient-accent)" }}
+            style={{ backgroundImage: "var(--gradient-accent-glossy)" }}
             className="shrink-0 rounded-full px-3.5 py-2 text-xs font-semibold text-(--color-accent-ink) transition disabled:opacity-40"
           >
             보내기

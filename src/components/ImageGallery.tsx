@@ -188,7 +188,7 @@ export default function ImageGallery() {
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
             aria-label="이미지 업로드"
-            style={{ backgroundImage: "var(--gradient-accent)" }}
+            style={{ backgroundImage: "var(--gradient-accent-glossy)" }}
             className="flex h-14 w-14 items-center justify-center rounded-full text-(--color-accent-ink) shadow-lg transition hover:brightness-105 active:scale-95 disabled:opacity-50"
           >
             <Plus className="h-6 w-6" />

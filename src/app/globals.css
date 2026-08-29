@@ -1,29 +1,38 @@
 @import "tailwindcss";
 
 :root {
-  /* Editorial black/white base with the brand's violet-to-peach gradient
-     held back for CTAs and selection states only — one loud accent against
-     a quiet, high-contrast ground, rather than a soft gradient everywhere. */
-  --color-app-bg: #faf8f5;
+  /* Glossy blue-glass mood: a cool icy gradient ground with soft specular
+     highlights (like light on a glass surface), a deep navy panel for the
+     header/side rail, and a blue glass gradient standing in for the old
+     pink/peach accent everywhere a CTA or selection state needs it. */
+  --color-app-bg: #eaf2fb;
   --color-surface: #ffffff;
   --color-surface-strong: #ffffff;
-  --color-ink: #18141f;
-  --color-muted: #6f6579;
-  --color-border: #e7e2eb;
+  --color-ink: #12202f;
+  --color-muted: #61758a;
+  --color-border: #d7e4f2;
 
-  --color-accent: #c26bb0;
-  --color-accent-dark: #a24f95;
+  --color-accent: #3f8de0;
+  --color-accent-dark: #2c6bb8;
   --color-accent-ink: #ffffff;
-  --gradient-accent: linear-gradient(135deg, #ffb08a 0%, #e97fb3 55%, #a480d9 100%);
+  --gradient-accent: linear-gradient(135deg, #eaf6ff 0%, #7fc0ff 45%, #2f6fd6 100%);
+  /* Same gradient with a specular highlight layered on top — the glass-glint
+     detail that reads as "glossy" rather than just "gradient". Stacked as a
+     background-image (not a pseudo-element) so it's safe to use on elements
+     that are themselves position:fixed (the FAB) without a stacking-context
+     conflict. */
+  --gradient-accent-glossy: radial-gradient(circle at 30% 22%, rgb(255 255 255 / 75%), transparent 55%),
+    var(--gradient-accent);
 
   --color-pill: #ffffff;
-  --color-pill-time: #f4f1f6;
+  --color-pill-time: #eef5fc;
 
-  /* Near-black panel used for header bars and other high-contrast blocks —
-     the "dark section" half of the editorial black/white pairing. */
-  --color-panel: #171320;
-  --color-panel-ink: #f5f2f8;
-  --color-panel-muted: rgb(245 242 248 / 62%);
+  /* Deep navy panel used for header bars and the desktop side rail — the
+     "dark section" half of the light/dark pairing, tuned blue instead of
+     the previous violet-black. */
+  --color-panel: #0c1a2b;
+  --color-panel-ink: #f2f7fd;
+  --color-panel-muted: rgb(242 247 253 / 62%);
   --color-panel-border: rgb(255 255 255 / 12%);
 }
 
@@ -46,6 +55,15 @@ body {
     "Malgun Gothic",
     serif;
   background-color: var(--color-app-bg);
+  /* A few soft, deliberately-placed highlights rather than a busy blob
+     soup — reads as glass catching light, not a default gradient. */
+  background-image:
+    radial-gradient(ellipse 60% 40% at 12% 0%, rgb(255 255 255 / 85%), transparent 60%),
+    radial-gradient(ellipse 50% 45% at 100% 15%, rgb(148 199 255 / 55%), transparent 60%),
+    radial-gradient(ellipse 55% 45% at 85% 100%, rgb(101 165 240 / 30%), transparent 65%),
+    linear-gradient(165deg, #f3f8fd 0%, #e3eefb 45%, #d7e7fa 100%);
+  background-attachment: fixed;
+  background-size: cover;
 }
 
 /* Oversized poster-style headings — page titles, the login wordmark. */

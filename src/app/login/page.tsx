@@ -73,7 +73,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading || !password}
-          style={{ backgroundImage: "var(--gradient-accent)" }}
+          style={{ backgroundImage: "var(--gradient-accent-glossy)" }}
           className="rounded-full px-6 py-3 text-sm font-semibold text-(--color-accent-ink) shadow-sm transition hover:brightness-105 active:scale-[0.98] disabled:opacity-40"
         >
           {loading ? "확인 중…" : "입장하기"}

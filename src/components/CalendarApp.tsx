@@ -401,7 +401,7 @@ export default function CalendarApp() {
                 type="button"
                 onClick={() => setShowAdd(true)}
                 aria-label="새 메모 추가"
-                style={{ backgroundImage: "var(--gradient-accent)" }}
+                style={{ backgroundImage: "var(--gradient-accent-glossy)" }}
                 className="fixed bottom-24 right-5 flex h-14 w-14 items-center justify-center rounded-full text-(--color-accent-ink) shadow-lg transition hover:brightness-105 active:scale-95 md:bottom-8 md:right-8"
               >
                 <Plus className="h-6 w-6" />
