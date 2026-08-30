@@ -15,13 +15,22 @@ const freesentation = localFont({
   display: "swap",
 });
 
-// Oversized display headings (page titles, the login wordmark) borrow this
-// face instead of just scaling up Freesentation — it's what actually reads
-// as "designed" rather than "default UI font, but big".
+// The login wordmark's face — reserved for that one screen, so it reads as
+// the app's "cover".
 const partialSans = localFont({
   src: "../fonts/PartialSansKR-Regular.otf",
   weight: "400",
   variable: "--font-display",
+  display: "swap",
+});
+
+// Every other page's title (캘린더/카테고리/이미지 headers, the month label)
+// borrows this instead — a different face than the login screen, so the
+// "cover" reads as distinct from the app's actual screens.
+const cafe24 = localFont({
+  src: "../fonts/Cafe24ProSlimMax.woff2",
+  weight: "400",
+  variable: "--font-heading",
   display: "swap",
 });
 
@@ -41,7 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="ko"
-      className={`${freesentation.variable} ${partialSans.variable} h-full antialiased`}
+      className={`${freesentation.variable} ${partialSans.variable} ${cafe24.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col text-(--color-ink)">
         {children}

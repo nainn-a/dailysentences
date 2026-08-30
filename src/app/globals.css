@@ -39,6 +39,7 @@
 @theme inline {
   --font-sans: var(--font-sans);
   --font-display: var(--font-display);
+  --font-heading: var(--font-heading);
 }
 
 * {
@@ -66,10 +67,15 @@ body {
   background-size: cover;
 }
 
-/* Oversized poster-style headings — page titles, the login wordmark. */
+/* The login wordmark — that one screen only, see layout.tsx. */
 .font-display {
   font-family: var(--font-display), var(--font-sans), sans-serif;
   letter-spacing: -0.02em;
+}
+
+/* Every other page's title — 캘린더/카테고리/이미지 headers, the month label. */
+.font-heading {
+  font-family: var(--font-heading), var(--font-sans), sans-serif;
 }
 
 /* Glassy translucent surface, reserved for things that float over content
