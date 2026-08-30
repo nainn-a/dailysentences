@@ -274,7 +274,7 @@ export default function CalendarApp() {
     <>
       {/* Header — the one dark, high-contrast band every screen shares */}
       <header className="flex items-center justify-between bg-(--color-panel) px-4 py-5 sm:px-6">
-        <h1 className="font-display text-2xl text-(--color-panel-ink) sm:text-3xl">
+        <h1 className="font-heading text-2xl text-(--color-panel-ink) sm:text-3xl">
           {headerDate}
         </h1>
         <div className="flex items-center gap-2">

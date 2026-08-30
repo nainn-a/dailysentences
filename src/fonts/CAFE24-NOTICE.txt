@@ -1,0 +1,7 @@
+Cafe24 Pro Slim Max (v2.0)
+
+Font: Cafe24 PRO Slim Max
+Supplied directly by the project owner as a .zip (webfont .woff2/.woff,
+plus .otf/.ttf and the license PDF) for use as the display/heading font
+on every page except the login screen. Bundled here and loaded via
+next/font/local. See the bundled "License-PRO SLIM Max.pdf" for terms.

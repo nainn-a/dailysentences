@@ -141,12 +141,12 @@ export default function TodoItem({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-3">
-        <span className="w-11 shrink-0 text-right text-xs tabular-nums text-(--color-muted)">
+      <div className="flex items-center gap-1.5 sm:gap-3">
+        <span className="hidden w-11 shrink-0 text-right text-xs tabular-nums text-(--color-muted) sm:block">
           {todo.time}
         </span>
 
-        <div className="relative flex min-w-0 flex-1 items-center gap-3 rounded-none border border-(--color-border) bg-(--color-pill) px-4 py-3 transition">
+        <div className="relative flex min-w-0 flex-1 items-center gap-3 rounded-none border border-(--color-border) bg-(--color-pill) px-3 py-3 transition sm:px-4">
           {copied && (
             <span
               aria-live="polite"
@@ -254,6 +254,12 @@ export default function TodoItem({
               style={{ WebkitTouchCallout: "none" }}
               className="flex min-w-0 flex-1 select-none items-center gap-2 text-left text-[15px] leading-snug text-(--color-ink)"
             >
+              {/* The time column to the left of the pill (below) is hidden on
+                  phones to give the text more room — shown inline here
+                  instead, at the same narrow width. */}
+              <span className="shrink-0 text-xs tabular-nums text-(--color-muted) sm:hidden">
+                {todo.time}
+              </span>
               {todo.categoryColor && (
                 <span
                   aria-hidden
@@ -287,9 +293,9 @@ export default function TodoItem({
             type="button"
             aria-label="수정"
             onClick={startEdit}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-(--color-muted) transition hover:bg-black/5"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-(--color-muted) transition hover:bg-black/5 sm:h-7 sm:w-7"
           >
-            <Pencil className="h-4 w-4" />
+            <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </button>
         )}
 
@@ -299,13 +305,13 @@ export default function TodoItem({
             aria-label="답장"
             onClick={() => setReplying((v) => !v)}
             className={[
-              "flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition",
+              "flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition sm:h-7 sm:w-7",
               replying
                 ? "bg-(--color-accent)/15 text-(--color-accent-dark)"
                 : "text-(--color-muted) hover:bg-black/5",
             ].join(" ")}
           >
-            <CornerDownRight className="h-4 w-4" />
+            <CornerDownRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </button>
         )}
 
@@ -317,11 +323,11 @@ export default function TodoItem({
           }
           onBlur={() => setPendingDelete(false)}
           className={[
-            "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-(--color-muted) transition",
+            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-(--color-muted) transition sm:h-7 sm:w-7",
             pendingDelete ? "bg-red-100 text-red-500" : "hover:bg-black/5",
           ].join(" ")}
         >
-          <X className="h-4 w-4" />
+          <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </button>
       </div>
 
