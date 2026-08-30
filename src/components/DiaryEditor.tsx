@@ -13,9 +13,13 @@ const AUTOSAVE_DELAY_MS = 1000;
 export default function DiaryEditor({
   date,
   dateLabel,
+  onSaved,
 }: {
   date: string;
   dateLabel: string;
+  // Lets the calendar's month view update its "일기 작성함" dot right away,
+  // instead of waiting for the next month-grid refetch.
+  onSaved?: (date: string, hasContent: boolean) => void;
 }) {
   const [content, setContent] = useState("");
   const [images, setImages] = useState<DiaryImage[]>([]);
@@ -56,15 +60,19 @@ export default function DiaryEditor({
     };
   }, []);
 
-  const save = useCallback(async (d: string, text: string, imgs: DiaryImage[]) => {
-    setStatus("saving");
-    const res = await fetch("/api/diary", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: d, content: text, images: imgs }),
-    });
-    setStatus(res.ok ? "saved" : "error");
-  }, []);
+  const save = useCallback(
+    async (d: string, text: string, imgs: DiaryImage[]) => {
+      setStatus("saving");
+      const res = await fetch("/api/diary", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: d, content: text, images: imgs }),
+      });
+      setStatus(res.ok ? "saved" : "error");
+      if (res.ok) onSaved?.(d, text.trim() !== "" || imgs.length > 0);
+    },
+    [onSaved],
+  );
 
   function handleContentChange(value: string) {
     setContent(value);
@@ -144,7 +152,7 @@ export default function DiaryEditor({
             onChange={(e) => handleContentChange(e.target.value)}
             onPaste={handlePaste}
             placeholder="오늘 하루 어땠어?"
-            className="glass min-h-[50vh] w-full resize-y rounded-2xl border border-(--color-border) bg-(--color-pill) p-4 text-[15px] leading-relaxed text-(--color-ink) outline-none focus:border-(--color-accent)"
+            className="min-h-[50vh] w-full resize-y rounded-2xl border border-(--color-border) bg-(--color-pill) p-4 text-[15px] leading-relaxed text-(--color-ink) outline-none focus:border-(--color-accent)"
           />
 
           {images.length > 0 && (

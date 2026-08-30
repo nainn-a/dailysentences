@@ -37,19 +37,15 @@ function LoginForm() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-10 px-6 py-16">
-      <div className="flex flex-col items-center gap-3 text-center">
-        <div
-          style={{ backgroundImage: "var(--gradient-accent)" }}
-          className="flex h-16 w-16 items-center justify-center rounded-2xl text-3xl font-semibold text-(--color-accent-ink) shadow-sm"
-        >
-          D
-        </div>
-        <h1 className="text-2xl font-semibold text-(--color-ink)">DAILY SENTENCES</h1>
-      </div>
+    <main className="flex min-h-screen flex-col items-center justify-center gap-12 px-6 py-16">
+      <h1 className="font-display text-center text-6xl leading-[0.95] text-(--color-ink) sm:text-7xl">
+        DAILY
+        <br />
+        SENTENCES
+      </h1>
 
       <form onSubmit={handleSubmit} className="flex w-full max-w-xs flex-col gap-3">
-        <div className="glass flex items-center gap-2 rounded-full border border-(--color-border) bg-(--color-surface) px-4 py-3 shadow-sm focus-within:border-(--color-accent)">
+        <div className="flex items-center gap-2 rounded-full border border-(--color-border) bg-(--color-surface) px-4 py-3 shadow-sm focus-within:border-(--color-accent)">
           <KeyRound className="h-4 w-4 shrink-0 text-(--color-muted)" />
           <input
             type="password"
@@ -67,7 +63,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading || !password}
-          style={{ backgroundImage: "var(--gradient-accent)" }}
+          style={{ backgroundImage: "var(--gradient-accent-glossy)" }}
           className="rounded-full px-6 py-3 text-sm font-semibold text-(--color-accent-ink) shadow-sm transition hover:brightness-105 active:scale-[0.98] disabled:opacity-40"
         >
           {loading ? "확인 중…" : "입장하기"}

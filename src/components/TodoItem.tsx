@@ -146,7 +146,7 @@ export default function TodoItem({
           {todo.time}
         </span>
 
-        <div className="glass relative flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-(--color-pill) px-4 py-3 shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition">
+        <div className="relative flex min-w-0 flex-1 items-center gap-3 rounded-none border border-(--color-border) bg-(--color-pill) px-4 py-3 transition">
           {copied && (
             <span
               aria-live="polite"
@@ -339,12 +339,12 @@ export default function TodoItem({
             onChange={(e) => setReplyText(e.target.value)}
             maxLength={200}
             placeholder="답장을 입력하세요"
-            className="glass min-w-0 flex-1 rounded-full border border-(--color-border) bg-(--color-pill-time) px-4 py-2 text-sm text-(--color-ink) outline-none focus:border-(--color-accent)"
+            className="min-w-0 flex-1 rounded-full border border-(--color-border) bg-(--color-pill-time) px-4 py-2 text-sm text-(--color-ink) outline-none focus:border-(--color-accent)"
           />
           <button
             type="submit"
             disabled={!replyText.trim() || sending}
-            style={{ backgroundImage: "var(--gradient-accent)" }}
+            style={{ backgroundImage: "var(--gradient-accent-glossy)" }}
             className="shrink-0 rounded-full px-3.5 py-2 text-xs font-semibold text-(--color-accent-ink) transition disabled:opacity-40"
           >
             보내기

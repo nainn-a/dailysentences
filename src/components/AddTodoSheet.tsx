@@ -355,7 +355,7 @@ export default function AddTodoSheet({
             <button
               type="submit"
               disabled={!text.trim() || uploading}
-              style={{ backgroundImage: "var(--gradient-accent)" }}
+              style={{ backgroundImage: "var(--gradient-accent-glossy)" }}
               className="flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold text-(--color-accent-ink) transition hover:brightness-105 disabled:opacity-40"
             >
               추가

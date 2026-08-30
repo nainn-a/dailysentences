@@ -66,6 +66,25 @@ export function getDiary(date: string): Promise<DiaryDTO | null> {
   });
 }
 
+// A saved entry with no text and no images (autosave fired, then everything
+// was deleted) doesn't count as "written" for the has-a-diary indicator.
+function hasContent(entry: DiaryDTO): boolean {
+  return entry.content.trim() !== "" || entry.images.length > 0;
+}
+
+// Date keys (within [start, end], inclusive) that have a non-empty diary
+// entry — used to paint the "일기 작성함" dot on the month calendar. Date
+// keys are "YYYY-MM-DD" strings, so plain string comparison sorts/bounds
+// them correctly.
+export function diaryDatesBetween(start: string, end: string): Promise<string[]> {
+  return enqueue(async () => {
+    const all = await readAll();
+    return Object.values(all)
+      .filter((entry) => entry.date >= start && entry.date <= end && hasContent(entry))
+      .map((entry) => entry.date);
+  });
+}
+
 export function saveDiary(
   date: string,
   content: string,

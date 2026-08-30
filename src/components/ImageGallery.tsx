@@ -124,14 +124,14 @@ export default function ImageGallery() {
   return (
     <>
       {/* Header */}
-      <header className="glass flex items-center justify-between border-b border-(--color-border) bg-(--color-surface) px-4 py-4 sm:px-6">
-        <h1 className="text-xl font-semibold text-(--color-ink)">이미지</h1>
+      <header className="flex items-center justify-between bg-(--color-panel) px-4 py-5 sm:px-6">
+        <h1 className="font-display text-2xl text-(--color-panel-ink) sm:text-3xl">이미지</h1>
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={handleLogout}
             aria-label="로그아웃"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-(--color-muted) transition hover:bg-black/5"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-(--color-panel-muted) transition hover:bg-white/10 hover:text-(--color-panel-ink)"
           >
             <LogOut className="h-4 w-4" />
           </button>
@@ -155,7 +155,7 @@ export default function ImageGallery() {
                 key={image.id}
                 type="button"
                 onClick={() => setPreview(image)}
-                className="glass aspect-square overflow-hidden rounded-2xl border border-(--color-border) bg-(--color-pill)"
+                className="aspect-square overflow-hidden rounded-2xl border border-(--color-border) bg-(--color-pill)"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element -- user-uploaded image from Blob/local API, not a static build asset */}
                 <img src={image.url} alt="" className="h-full w-full object-cover" />
@@ -179,7 +179,7 @@ export default function ImageGallery() {
             onClick={pasteFromClipboard}
             disabled={uploading}
             aria-label="클립보드에서 붙여넣기"
-            className="glass flex h-11 w-11 items-center justify-center rounded-full bg-(--color-surface-strong) text-(--color-ink) shadow-lg transition hover:brightness-105 active:scale-95 disabled:opacity-50"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-(--color-surface-strong) text-(--color-ink) shadow-lg transition hover:brightness-105 active:scale-95 disabled:opacity-50"
           >
             <ClipboardPaste className="h-5 w-5" />
           </button>
@@ -188,7 +188,7 @@ export default function ImageGallery() {
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
             aria-label="이미지 업로드"
-            style={{ backgroundImage: "var(--gradient-accent)" }}
+            style={{ backgroundImage: "var(--gradient-accent-glossy)" }}
             className="flex h-14 w-14 items-center justify-center rounded-full text-(--color-accent-ink) shadow-lg transition hover:brightness-105 active:scale-95 disabled:opacity-50"
           >
             <Plus className="h-6 w-6" />

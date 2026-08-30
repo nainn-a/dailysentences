@@ -15,6 +15,16 @@ const freesentation = localFont({
   display: "swap",
 });
 
+// Oversized display headings (page titles, the login wordmark) borrow this
+// face instead of just scaling up Freesentation — it's what actually reads
+// as "designed" rather than "default UI font, but big".
+const partialSans = localFont({
+  src: "../fonts/PartialSansKR-Regular.otf",
+  weight: "400",
+  variable: "--font-display",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "DAILY SENTENCES",
   description: "날짜별로 메모와 할 일을 남기는 캘린더 웹앱. Google 계정으로 로그인하세요.",
@@ -24,12 +34,15 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#f4f1ec",
+  themeColor: "#faf8f5",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ko" className={`${freesentation.variable} h-full antialiased`}>
+    <html
+      lang="ko"
+      className={`${freesentation.variable} ${partialSans.variable} h-full antialiased`}
+    >
       <body className="min-h-full flex flex-col text-(--color-ink)">
         {children}
       </body>

@@ -1,0 +1,5 @@
+Partial Sans KR
+
+Font: Partial Sans KR (Regular)
+Supplied directly by the project owner as an .otf file for use as the
+site's display/heading font. Bundled here and loaded via next/font/local.
