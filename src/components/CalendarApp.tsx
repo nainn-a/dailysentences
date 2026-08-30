@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, LogOut, Plus, RotateCcw, Trash2 } from "lucide-react";
 
 import {
   addDays,
@@ -38,6 +38,10 @@ export default function CalendarApp() {
   const [showAdd, setShowAdd] = useState(false);
   const [filterColor, setFilterColor] = useState<string | null>(null);
   const [view, setView] = useState<ViewMode>("memo");
+  // Phones default to the compact week strip; tapping the chevron expands
+  // it in place to the full month grid (badges + diary icon included),
+  // mirroring the desktop sidebar. Collapses back after picking a date.
+  const [mobileCalendarExpanded, setMobileCalendarExpanded] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [showTrash, setShowTrash] = useState(false);
   const [undo, setUndo] = useState<{ id: string; label: string } | null>(null);
@@ -293,14 +297,44 @@ export default function CalendarApp() {
         </div>
       </header>
 
-      {/* Week strip — phones only; wide viewports get the month grid instead */}
+      {/* Week strip — phones only; wide viewports get the month grid sidebar
+          instead. The chevron expands this in place to the same month grid
+          (badges + diary icon), collapsing back once a date is picked. */}
       <div className="border-b border-(--color-border) bg-(--color-surface) md:hidden">
-        <WeekStrip
-          weekStart={weekStart}
-          selected={selected}
-          counts={counts}
-          onSelect={setSelected}
-        />
+        {mobileCalendarExpanded ? (
+          <div className="px-4 pb-1 pt-3 sm:px-6">
+            <MonthCalendar
+              month={calendarMonth}
+              selected={selected}
+              counts={monthCounts}
+              diaryDates={monthDiaryDates}
+              onSelectDate={(day) => {
+                handleSelectDate(day);
+                setMobileCalendarExpanded(false);
+              }}
+              onChangeMonth={setCalendarMonth}
+            />
+          </div>
+        ) : (
+          <WeekStrip
+            weekStart={weekStart}
+            selected={selected}
+            counts={counts}
+            onSelect={setSelected}
+          />
+        )}
+        <button
+          type="button"
+          onClick={() => setMobileCalendarExpanded((v) => !v)}
+          aria-label={mobileCalendarExpanded ? "주간 보기로 접기" : "월간 달력 펼치기"}
+          className="flex w-full items-center justify-center py-1 text-(--color-muted) transition hover:text-(--color-ink)"
+        >
+          {mobileCalendarExpanded ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </button>
       </div>
 
       <div className="flex min-h-0 flex-1">
