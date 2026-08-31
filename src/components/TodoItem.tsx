@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, CornerDownRight, Pencil, X } from "lucide-react";
+import { Check, CopyPlus, CornerDownRight, Pencil, X } from "lucide-react";
 
+import { addDays, fromDateKey, toDateKey } from "@/lib/date";
 import type { Category } from "@/lib/categories";
 import type { TodoDTO } from "@/lib/types";
 
@@ -19,6 +20,7 @@ export default function TodoItem({
   onEdit,
   onToggleDone,
   onReply,
+  onDuplicate,
   isReply = false,
 }: {
   todo: TodoDTO;
@@ -30,6 +32,10 @@ export default function TodoItem({
   onEdit?: (id: string, text: string, category: { color: string | null }) => void;
   onToggleDone?: (id: string) => void;
   onReply?: (parentId: string, text: string) => Promise<boolean>;
+  // Clones this memo (text, category, image) onto a different date, leaving
+  // the original in place. Not offered on replies — a reply only makes
+  // sense attached to its parent's date.
+  onDuplicate?: (id: string, date: string) => Promise<boolean>;
   isReply?: boolean;
 }) {
   const [pendingDelete, setPendingDelete] = useState(false);
@@ -38,6 +44,11 @@ export default function TodoItem({
   const [replying, setReplying] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
+  const [duplicateDate, setDuplicateDate] = useState(() =>
+    toDateKey(addDays(fromDateKey(todo.date), 1)),
+  );
+  const [duplicateSending, setDuplicateSending] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(todo.text);
   const [editCategoryColor, setEditCategoryColor] = useState<string | null>(
@@ -66,6 +77,14 @@ export default function TodoItem({
       setReplyText("");
       setReplying(false);
     }
+  }
+
+  async function submitDuplicate() {
+    if (!duplicateDate || !onDuplicate) return;
+    setDuplicateSending(true);
+    const ok = await onDuplicate(todo.id, duplicateDate);
+    setDuplicateSending(false);
+    if (ok) setDuplicating(false);
   }
 
   function startEdit() {
@@ -315,6 +334,22 @@ export default function TodoItem({
           </button>
         )}
 
+        {!isReply && !editing && onDuplicate && (
+          <button
+            type="button"
+            aria-label="다른 날로 복제"
+            onClick={() => setDuplicating((v) => !v)}
+            className={[
+              "flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition sm:h-7 sm:w-7",
+              duplicating
+                ? "bg-(--color-accent)/15 text-(--color-accent-dark)"
+                : "text-(--color-muted) hover:bg-black/5",
+            ].join(" ")}
+          >
+            <CopyPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          </button>
+        )}
+
         <button
           type="button"
           aria-label="삭제"
@@ -354,6 +389,32 @@ export default function TodoItem({
             className="shrink-0 rounded-full px-3.5 py-2 text-xs font-semibold text-(--color-accent-ink) transition disabled:opacity-40"
           >
             보내기
+          </button>
+        </form>
+      )}
+
+      {duplicating && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            submitDuplicate();
+          }}
+          className="ml-11 flex items-center gap-2"
+        >
+          <input
+            autoFocus
+            type="date"
+            value={duplicateDate}
+            onChange={(e) => setDuplicateDate(e.target.value)}
+            className="min-w-0 flex-1 rounded-full border border-(--color-border) bg-(--color-pill-time) px-4 py-2 text-sm text-(--color-ink) outline-none focus:border-(--color-accent)"
+          />
+          <button
+            type="submit"
+            disabled={!duplicateDate || duplicateSending}
+            style={{ backgroundImage: "var(--gradient-accent-glossy)" }}
+            className="shrink-0 rounded-full px-3.5 py-2 text-xs font-semibold text-(--color-accent-ink) transition disabled:opacity-40"
+          >
+            복제
           </button>
         </form>
       )}
