@@ -8,6 +8,7 @@ import {
   addDays,
   formatHeaderDate,
   formatNowTime,
+  fromDateKey,
   monthGridDays,
   startOfMonth,
   startOfWeek,
@@ -46,6 +47,10 @@ export default function CalendarApp() {
   const [showTrash, setShowTrash] = useState(false);
   const [undo, setUndo] = useState<{ id: string; label: string } | null>(null);
   const undoTimerRef = useRef<number | null>(null);
+  const [duplicateToast, setDuplicateToast] = useState<{ date: string; label: string } | null>(
+    null,
+  );
+  const duplicateToastTimerRef = useRef<number | null>(null);
 
   const weekStart = useMemo(() => startOfWeek(selected), [selected]);
   const selectedKey = toDateKey(selected);
@@ -119,6 +124,7 @@ export default function CalendarApp() {
   useEffect(() => {
     return () => {
       if (undoTimerRef.current !== null) window.clearTimeout(undoTimerRef.current);
+      if (duplicateToastTimerRef.current !== null) window.clearTimeout(duplicateToastTimerRef.current);
     };
   }, []);
 
@@ -235,6 +241,40 @@ export default function CalendarApp() {
       setMonthCounts((prev) => ({ ...prev, [selectedKey]: (prev[selectedKey] ?? 0) + 1 }));
     }
     return res.ok;
+  }
+
+  // Clones a memo (text/category/image) onto a different date, leaving the
+  // original where it is. The target date may be outside every range
+  // currently on screen, so — rather than hand-patch counts the way
+  // handleAdd/handleReply do for the selected day — just refetch the week
+  // and month ranges; cheap, and correct regardless of where the target
+  // date falls.
+  async function handleDuplicate(id: string, date: string): Promise<boolean> {
+    const source = todos.find((t) => t.id === id);
+    if (!source) return false;
+    const res = await fetch("/api/todos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        date,
+        time: formatNowTime(),
+        text: source.text,
+        imageId: source.imageId,
+        imageUrl: source.imageUrl,
+        categoryColor: source.categoryColor,
+      }),
+    });
+    if (!res.ok) return false;
+    if (date === selectedKey) {
+      const data = await res.json();
+      setTodos((prev) => [data.todo, ...prev]);
+    }
+    await Promise.all([loadWeekCounts(weekStart), loadMonthCounts(calendarMonth)]);
+
+    if (duplicateToastTimerRef.current !== null) window.clearTimeout(duplicateToastTimerRef.current);
+    setDuplicateToast({ date, label: formatHeaderDate(fromDateKey(date)) });
+    duplicateToastTimerRef.current = window.setTimeout(() => setDuplicateToast(null), 4000);
+    return true;
   }
 
   async function handleLogout() {
@@ -448,6 +488,7 @@ export default function CalendarApp() {
                       onEdit={handleEdit}
                       onToggleDone={handleToggleDone}
                       onReply={handleReply}
+                      onDuplicate={handleDuplicate}
                     />
                   ))}
                 </div>
@@ -496,6 +537,22 @@ export default function CalendarApp() {
           >
             <RotateCcw className="h-3 w-3" />
             되돌리기
+          </button>
+        </div>
+      )}
+
+      {duplicateToast && (
+        <div className="fixed bottom-40 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full bg-black/80 py-2 pl-4 pr-2 text-xs text-white md:bottom-24">
+          <span className="max-w-[50vw] truncate">{duplicateToast.label}로 복제됨</span>
+          <button
+            type="button"
+            onClick={() => {
+              handleSelectDate(fromDateKey(duplicateToast.date));
+              setDuplicateToast(null);
+            }}
+            className="shrink-0 rounded-full bg-white/15 px-3 py-1.5 font-semibold transition hover:bg-white/25"
+          >
+            이동
           </button>
         </div>
       )}

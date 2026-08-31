@@ -194,6 +194,30 @@ export default function CategoryBrowser() {
     return res.ok;
   }
 
+  // Clones a memo (text/category/image) onto a different date, leaving the
+  // original where it is. Unlike the calendar screen, this view isn't
+  // date-scoped — a full reload picks the duplicate up under its own date
+  // group automatically, wherever that falls.
+  async function handleDuplicate(id: string, date: string): Promise<boolean> {
+    const source = todos.find((t) => t.id === id);
+    if (!source || !color) return false;
+    const res = await fetch("/api/todos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        date,
+        time: formatNowTime(),
+        text: source.text,
+        imageId: source.imageId,
+        imageUrl: source.imageUrl,
+        categoryColor: source.categoryColor,
+      }),
+    });
+    if (!res.ok) return false;
+    await load(color);
+    return true;
+  }
+
   async function handleLogout() {
     await fetch("/api/logout", { method: "POST" });
     router.replace("/login");
@@ -407,6 +431,7 @@ export default function CategoryBrowser() {
                     onEdit={handleEdit}
                     onToggleDone={handleToggleDone}
                     onReply={(parentId, text) => handleReply(parentId, text, todo.date)}
+                    onDuplicate={handleDuplicate}
                   />
                 ))}
               </section>
