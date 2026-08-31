@@ -37,13 +37,25 @@ const cafe24 = localFont({
 export const metadata: Metadata = {
   title: "DAILY SENTENCES",
   description: "날짜별로 메모와 할 일을 남기는 캘린더 웹앱. Google 계정으로 로그인하세요.",
+  icons: {
+    // favicon.ico (src/app/favicon.ico) is picked up automatically by Next;
+    // these cover the sizes it doesn't — the iOS home-screen icon and the
+    // larger PNGs some Android/desktop install prompts ask for.
+    apple: "/apple-touch-icon.png",
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#faf8f5",
+  // The navy header/side-rail color — tints the mobile browser chrome to
+  // match instead of the old cream background this used to be set to.
+  themeColor: "#0c1a2b",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
