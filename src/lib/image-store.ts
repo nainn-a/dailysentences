@@ -7,10 +7,18 @@ import type { ImageDTO } from "@/lib/types";
 import { MAX_IMAGE_BYTES } from "@/lib/image-limits";
 
 // Storage backend picks itself automatically, same pattern as store.ts:
-//  - Vercel Blob when BLOB_READ_WRITE_TOKEN is present — this is what you
-//    get for free by adding the "Blob" storage integration in the Vercel
-//    dashboard (Storage tab → Create Database). Needed for persistence on
-//    Vercel, since serverless functions don't have a durable local disk.
+//  - Vercel Blob when a store is connected — this is what you get for free
+//    by adding the "Blob" storage integration in the Vercel dashboard
+//    (Storage tab → Create Database → Connect to Project). Needed for
+//    persistence on Vercel, since serverless functions don't have a
+//    durable local disk. Two ways @vercel/blob authenticates, both
+//    handled automatically by the SDK itself — this just has to detect
+//    which one applies:
+//      - Newer connected stores only inject BLOB_STORE_ID (no copyable
+//        token in the dashboard); the SDK pairs it with the OIDC token
+//        Vercel injects into every deployment at runtime.
+//      - Older stores / a manually-added token inject BLOB_READ_WRITE_TOKEN
+//        directly.
 //  - Local files under data/images/ otherwise — zero setup for local dev,
 //    or for any always-on host where the local disk does persist. Served
 //    back out through /api/images/file/[filename].
@@ -21,7 +29,7 @@ const DATA_DIR = path.join(process.cwd(), "data", "images");
 export { MAX_IMAGE_BYTES };
 
 function hasBlob(): boolean {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
 }
 
 function extensionFor(file: File): string {
