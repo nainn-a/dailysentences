@@ -32,6 +32,13 @@ function hasBlob(): boolean {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
 }
 
+// Exposed so the API route can tell "Blob looks connected but the actual
+// call still failed" apart from "Blob was never connected at all" — the
+// BLOB_STORE_ID (OIDC) path can be configured but still fail at request
+// time if OIDC Federation isn't turned on for the project, unlike
+// BLOB_READ_WRITE_TOKEN which either works or was never set.
+export { hasBlob as isBlobConfigured };
+
 function extensionFor(file: File): string {
   const fromType = file.type.split("/")[1];
   const fromName = file.name.includes(".") ? file.name.split(".").pop() : undefined;
