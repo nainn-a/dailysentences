@@ -2,12 +2,31 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { AUTH_COOKIE_NAME, isValidAuthCookieValue } from "@/lib/auth-cookie";
-import { MAX_IMAGE_BYTES, deleteImage, listImages, saveImage } from "@/lib/image-store";
+import {
+  MAX_IMAGE_BYTES,
+  deleteImage,
+  isBlobConfigured,
+  listImages,
+  saveImage,
+} from "@/lib/image-store";
 
 async function requireAuth() {
   const jar = await cookies();
   const ok = await isValidAuthCookieValue(jar.get(AUTH_COOKIE_NAME)?.value);
   return ok;
+}
+
+// A connected-but-failing Blob store (e.g. BLOB_STORE_ID is set but OIDC
+// Federation isn't turned on for the project, so @vercel/blob can't get a
+// token) looks identical from here to "never connected" unless we surface
+// what actually got thrown — so do that instead of guessing a canned
+// message from env var presence alone.
+function blobErrorHint(err: unknown): string {
+  const detail = err instanceof Error ? err.message : String(err);
+  if (!isBlobConfigured()) {
+    return "이미지 저장소가 연결되어 있지 않아요. Vercel 프로젝트의 Storage 탭에서 Blob을 연결한 뒤 다시 시도해주세요.";
+  }
+  return `이미지 저장에 실패했어요: ${detail}`;
 }
 
 // GET /api/images -> every uploaded image, newest first.
@@ -21,10 +40,7 @@ export async function GET() {
     return NextResponse.json({ images });
   } catch (err) {
     console.error("이미지 목록 조회 실패:", err);
-    const hint = process.env.BLOB_READ_WRITE_TOKEN
-      ? "이미지 목록을 불러오지 못했어요. 잠시 후 다시 시도해주세요."
-      : "이미지 저장소가 연결되어 있지 않아요. Vercel 프로젝트의 Storage 탭에서 Blob을 연결한 뒤 다시 시도해주세요.";
-    return NextResponse.json({ error: hint }, { status: 500 });
+    return NextResponse.json({ error: blobErrorHint(err) }, { status: 500 });
   }
 }
 
@@ -60,10 +76,7 @@ export async function POST(request: Request) {
     // Blob → Connect to Project). Same failure mode the todos list hit
     // before Redis was connected.
     console.error("이미지 저장 실패:", err);
-    const hint = process.env.BLOB_READ_WRITE_TOKEN
-      ? "이미지 저장에 실패했어요. 잠시 후 다시 시도해주세요."
-      : "이미지 저장소가 연결되어 있지 않아요. Vercel 프로젝트의 Storage 탭에서 Blob을 연결한 뒤 다시 시도해주세요.";
-    return NextResponse.json({ error: hint }, { status: 500 });
+    return NextResponse.json({ error: blobErrorHint(err) }, { status: 500 });
   }
   return NextResponse.json({ image }, { status: 201 });
 }
