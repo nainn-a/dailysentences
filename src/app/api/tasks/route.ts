@@ -44,6 +44,13 @@ export async function GET(request: Request) {
   return NextResponse.json(
     todos
       .filter((t) => !t.parentId) // replies aren't standalone tasks
-      .map((t) => ({ id: t.id, text: t.text, date: t.date, completed: t.done })),
+      .map((t) => ({
+        id: t.id,
+        text: t.text,
+        date: t.date,
+        time: t.time,
+        completed: t.done,
+        completedAt: t.completedAt ?? null,
+      })),
   );
 }

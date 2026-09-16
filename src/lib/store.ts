@@ -217,7 +217,11 @@ export function update(
     if (idx === -1) return null;
 
     const next: TodoDTO = { ...all[idx] };
-    if (patch.done !== undefined) next.done = patch.done;
+    if (patch.done !== undefined) {
+      next.done = patch.done;
+      if (patch.done) next.completedAt = new Date().toISOString();
+      else delete next.completedAt;
+    }
     if (patch.text !== undefined) next.text = patch.text;
     if (patch.categoryColor !== undefined) {
       if (patch.categoryColor === null) delete next.categoryColor;
