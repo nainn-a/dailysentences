@@ -135,6 +135,18 @@ export function listByCategory(color: string): Promise<TodoDTO[]> {
   });
 }
 
+// Every top-level, not-yet-done memo across every date — the backlog view
+// used by GET /api/tasks with no ?date filter, so an outside consumer (the
+// Obsidian sync) can pull a running task list rather than just one day.
+export function listIncomplete(): Promise<TodoDTO[]> {
+  return enqueue(async () => {
+    const all = await readAllFresh();
+    return all
+      .filter((t) => !t.deletedAt && !t.done && !t.parentId)
+      .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+  });
+}
+
 export function countsBetween(start: string, end: string): Promise<Record<string, number>> {
   return enqueue(async () => {
     const all = await readAllFresh();
