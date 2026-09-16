@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 
 import { timingSafeEqual } from "@/lib/auth-cookie";
+import { getCategories } from "@/lib/categories-store";
 import { toDateKey } from "@/lib/date";
 import { listByDate, listIncomplete } from "@/lib/store";
+
+// Only memos tagged with this category name are synced to Obsidian — a
+// plain memo with no category (or a different one) never shows up here.
+// If no category with this name exists yet, every result is filtered out;
+// create one with exactly this name in the 카테고리 tab to enable the sync.
+const TASK_CATEGORY_NAME = "todo";
 
 // GET /api/tasks[?date=today]
 //
@@ -16,8 +23,8 @@ import { listByDate, listIncomplete } from "@/lib/store";
 // Disabled (501) until OBSIDIAN_API_TOKEN is set, since an unset token would
 // otherwise mean "no auth at all".
 //
-// ?date=today   -> that day's items (done and not-done alike)
-// no ?date      -> every not-yet-done item, across every date
+// ?date=today   -> that day's "todo"-tagged items (done and not-done alike)
+// no ?date      -> every not-yet-done "todo"-tagged item, across every date
 export async function GET(request: Request) {
   const expected = process.env.OBSIDIAN_API_TOKEN;
   if (!expected) {
@@ -40,10 +47,15 @@ export async function GET(request: Request) {
   }
 
   const todos = date === "today" ? await listByDate(toDateKey(new Date())) : await listIncomplete();
+  const categories = await getCategories();
+  const taskColor = categories.find((c) => c.name === TASK_CATEGORY_NAME)?.color;
 
   return NextResponse.json(
     todos
-      .filter((t) => !t.parentId) // replies aren't standalone tasks
+      // replies aren't standalone tasks; only "todo"-tagged memos sync — and
+      // taskColor being undefined (category doesn't exist yet) must mean
+      // "match nothing", not "match every uncategorized memo".
+      .filter((t) => !t.parentId && !!taskColor && t.categoryColor === taskColor)
       .map((t) => ({
         id: t.id,
         text: t.text,
