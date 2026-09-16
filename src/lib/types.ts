@@ -9,6 +9,10 @@ export type TodoDTO = {
   imageUrl?: string;
   parentId?: string;
   categoryColor?: string;
+  // Set when `done` flips to true (and cleared if it flips back), so a
+  // consumer can show when a todo was actually finished, not just that it
+  // is. See update() in store.ts.
+  completedAt?: string;
   // Set on delete instead of actually removing the row, so a mistaken
   // delete can be undone. Never appears in a normal listing — see
   // readAllFresh() in store.ts — only in the 휴지통 (trash) view.
