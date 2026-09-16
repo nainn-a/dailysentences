@@ -337,10 +337,10 @@ export default function CalendarApp() {
         </div>
       </header>
 
-      {/* Week strip — phones only; wide viewports get the month grid sidebar
-          instead. The chevron expands this in place to the same month grid
-          (badges + diary icon), collapsing back once a date is picked. */}
-      <div className="border-b border-(--color-border) bg-(--color-surface) md:hidden">
+      {/* Compact calendar — used until there is enough room for both the month
+          grid and a readable memo column. The chevron expands this in place to
+          the same month grid (badges + diary icon), collapsing after selection. */}
+      <div className="border-b border-(--color-border) bg-(--color-surface) min-[56rem]:hidden">
         {mobileCalendarExpanded ? (
           <div className="px-4 pb-1 pt-3 sm:px-6">
             <MonthCalendar
@@ -378,10 +378,10 @@ export default function CalendarApp() {
       </div>
 
       <div className="flex min-h-0 flex-1">
-        {/* Month grid — wide viewports only; phones navigate by the week strip above.
-            50/50 split with the day list: w-1/2 + shrink-0 here, flex-1 on the
-            list side, so the two always add up to the full width. */}
-        <aside className="hidden w-1/2 shrink-0 flex-col gap-4 overflow-y-auto border-r border-(--color-border) bg-(--color-surface) p-6 md:flex">
+        {/* The calendar yields space to the memo column as the window narrows.
+            Below 56rem the compact calendar above takes over, avoiding a point
+            where either column becomes too narrow to use comfortably. */}
+        <aside className="hidden w-[clamp(18rem,38%,30rem)] shrink-0 flex-col gap-4 overflow-y-auto border-r border-(--color-border) bg-(--color-surface) p-6 min-[56rem]:flex">
           <MonthCalendar
             month={calendarMonth}
             selected={selected}
@@ -392,7 +392,7 @@ export default function CalendarApp() {
           />
         </aside>
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col min-[56rem]:min-w-[31.5rem]">
           {/* Memo / Diary segmented toggle */}
           <div className="flex justify-center border-b border-(--color-border) bg-(--color-surface) px-4 py-2 sm:px-6">
             <div className="flex gap-1 rounded-full bg-black/5 p-1">
