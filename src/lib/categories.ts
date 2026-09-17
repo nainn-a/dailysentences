@@ -8,6 +8,14 @@ export type Category = {
   name: string;
 };
 
+export const TODO_CATEGORY_NAME = "todo";
+
+export function findTodoCategory(categories: Category[]): Category | undefined {
+  return categories.find(
+    (category) => category.name.trim().toLocaleLowerCase() === TODO_CATEGORY_NAME,
+  );
+}
+
 export const DEFAULT_CATEGORIES: Category[] = [
   { color: "#f5a8a8", name: "레드" },
   { color: "#f8c99c", name: "오렌지" },

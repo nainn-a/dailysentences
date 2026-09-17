@@ -9,6 +9,9 @@ export type TodoDTO = {
   imageUrl?: string;
   parentId?: string;
   categoryColor?: string;
+  // Identifies the previous day's memo that produced this automatic
+  // rollover copy. Used to make cron retries idempotent.
+  rolledOverFromId?: string;
   // Set when `done` flips to true (and cleared if it flips back), so a
   // consumer can show when a todo was actually finished, not just that it
   // is. See update() in store.ts.

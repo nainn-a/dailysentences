@@ -190,6 +190,51 @@ export function create(input: {
   });
 }
 
+export function rollOverIncompleteTodos(input: {
+  fromDate: string;
+  toDate: string;
+  categoryColor: string;
+}): Promise<{ created: TodoDTO[]; skipped: number }> {
+  return enqueue(async () => {
+    const all = await readAllFresh();
+    const candidates = all.filter(
+      (todo) =>
+        todo.date === input.fromDate &&
+        !todo.deletedAt &&
+        !todo.done &&
+        !todo.parentId &&
+        todo.categoryColor === input.categoryColor,
+    );
+    const alreadyRolledOver = new Set(
+      all
+        .filter((todo) => todo.date === input.toDate && !todo.deletedAt)
+        .map((todo) => todo.rolledOverFromId)
+        .filter((id): id is string => Boolean(id)),
+    );
+    const createdAt = new Date().toISOString();
+    const created = candidates
+      .filter((todo) => !alreadyRolledOver.has(todo.id))
+      .map<TodoDTO>((todo) => ({
+        id: randomUUID(),
+        date: input.toDate,
+        time: todo.time,
+        text: todo.text,
+        done: false,
+        createdAt,
+        categoryColor: todo.categoryColor,
+        rolledOverFromId: todo.id,
+        ...(todo.imageId && todo.imageUrl
+          ? { imageId: todo.imageId, imageUrl: todo.imageUrl }
+          : {}),
+      }));
+
+    if (created.length > 0) {
+      await writeAll([...all, ...created]);
+    }
+    return { created, skipped: candidates.length - created.length };
+  });
+}
+
 // A memo one level deep — reachable from listByDate, but not itself a
 // valid reply target (no threads-of-threads). Used by the API route to
 // validate a reply's parentId before creating it.

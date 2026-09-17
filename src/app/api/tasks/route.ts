@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { timingSafeEqual } from "@/lib/auth-cookie";
+import { findTodoCategory } from "@/lib/categories";
 import { getCategories } from "@/lib/categories-store";
 import { toDateKey } from "@/lib/date";
 import { listByDate, listIncomplete } from "@/lib/store";
@@ -9,8 +10,6 @@ import { listByDate, listIncomplete } from "@/lib/store";
 // plain memo with no category (or a different one) never shows up here.
 // If no category with this name exists yet, every result is filtered out;
 // create one with exactly this name in the 카테고리 tab to enable the sync.
-const TASK_CATEGORY_NAME = "todo";
-
 // GET /api/tasks[?date=today]
 //
 // A separate, Bearer-token-authenticated read endpoint for pulling memos
@@ -48,7 +47,7 @@ export async function GET(request: Request) {
 
   const todos = date === "today" ? await listByDate(toDateKey(new Date())) : await listIncomplete();
   const categories = await getCategories();
-  const taskColor = categories.find((c) => c.name === TASK_CATEGORY_NAME)?.color;
+  const taskColor = findTodoCategory(categories)?.color;
 
   return NextResponse.json(
     todos

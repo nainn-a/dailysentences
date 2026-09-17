@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ClipboardPaste, ImagePlus, Plus, X } from "lucide-react";
 
-import { randomPastelColor, type Category } from "@/lib/categories";
+import { findTodoCategory, randomPastelColor, type Category } from "@/lib/categories";
 import { formatNowTime } from "@/lib/date";
 import { compressImageIfNeeded } from "@/lib/image-compress";
 import { MAX_IMAGE_BYTES } from "@/lib/image-limits";
@@ -35,6 +35,7 @@ export default function AddTodoSheet({
   const [newCategoryName, setNewCategoryName] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const categoryTouchedRef = useRef(false);
   // Submitting hands the uploaded image off to the memo — skip the
   // clean-up-on-close for it once that happens.
   const submittedRef = useRef(false);
@@ -59,7 +60,11 @@ export default function AddTodoSheet({
       const res = await fetch("/api/categories");
       if (res.ok) {
         const data = await res.json();
-        setCategories(data.categories ?? []);
+        const nextCategories: Category[] = data.categories ?? [];
+        setCategories(nextCategories);
+        if (!categoryTouchedRef.current) {
+          setCategoryColor(findTodoCategory(nextCategories)?.color ?? null);
+        }
       }
     })();
   }, []);
@@ -228,7 +233,10 @@ export default function AddTodoSheet({
                   type="button"
                   aria-label={c.name}
                   title={c.name}
-                  onClick={() => setCategoryColor((cur) => (cur === c.color ? null : c.color))}
+                  onClick={() => {
+                    categoryTouchedRef.current = true;
+                    setCategoryColor((cur) => (cur === c.color ? null : c.color));
+                  }}
                   className={[
                     "h-6 w-6 shrink-0 rounded-full transition",
                     categoryColor === c.color ? "ring-2 ring-(--color-accent) ring-offset-2" : "",

@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/rollover-todos",
+      "schedule": "0 15 * * *"
+    }
+  ]
+}

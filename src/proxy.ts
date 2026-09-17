@@ -7,7 +7,13 @@ import { AUTH_COOKIE_NAME, isValidAuthCookieValue } from "@/lib/auth-cookie";
 // must be, or nobody could ever log in. /api/widget and /api/tasks are also
 // here: they do their own token checks (see those routes), since a Shortcut
 // or an Obsidian script can't carry the login cookie around.
-const PUBLIC_PATHS = new Set(["/login", "/api/login", "/api/widget", "/api/tasks"]);
+const PUBLIC_PATHS = new Set([
+  "/login",
+  "/api/login",
+  "/api/widget",
+  "/api/tasks",
+  "/api/cron/rollover-todos",
+]);
 
 export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
